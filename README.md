@@ -1,6 +1,6 @@
-# Software Engineering Blueprint v1.0
+# Software Engineering Blueprint v1.0.0
 
-A tool-agnostic, reusable blueprint for professional software delivery, from requirements specification through Continuous Integration (CI), Continuous Delivery (CD), deployment and observability.
+A tool-agnostic, reusable blueprint for professional software delivery, from requirements specification through Continuous Integration (CI), Continuous Delivery (CD), deployment and observability. It defines the full engineering lifecycle — the phases, the artifacts each phase must produce, and the quality gates that apply — while leaving the concrete language, framework, IDE, cloud, registry and deployment platform to each adopting project.
 
 ## Goals
 
@@ -42,11 +42,29 @@ The blueprint defines **what must happen, what artifacts are expected, and what 
 - `.github/workflows/` — example CI workflow and reusable workflow.
 - `examples/` — examples for adopting the blueprint.
 
+## Installation
+
+Install the blueprint into an existing project with the provided installers. The destination directory is created if it does not exist, and existing content is never overwritten without warning.
+
+Windows:
+
+```powershell
+.\scripts\blueprint-init.ps1 C:\proyectos\mi-app
+```
+
+Linux/macOS:
+
+```bash
+./scripts/blueprint-init.sh /home/user/proyectos/mi-app
+```
+
 ## Quick start
 
 Copy the relevant directories into a project or keep this repository as a centralized blueprint repository.
 
-The OpenCode skills are automatically discoverable from `.opencode/skills/<name>/SKILL.md`.
+The blueprint is IDE-agnostic: it can be used from IntelliJ IDEA, Visual Studio, VS Code or any other IDE. It is also technology-agnostic at the process level — each project chooses its own language, framework, cloud, registry and deployment platform.
+
+The OpenCode skills are optional and automatically discoverable from `.opencode/skills/<name>/SKILL.md`. OpenCode is an adapter, not a dependency: the blueprint works perfectly without it.
 
 GitHub Actions workflows belong in `.github/workflows/`.
 
@@ -54,3 +72,5 @@ GitHub Actions workflows belong in `.github/workflows/`.
 
 Blueprint version: `1.0.0`
 Status: Initial reusable release.
+
+See [CHANGELOG.md](CHANGELOG.md) for the release history.
