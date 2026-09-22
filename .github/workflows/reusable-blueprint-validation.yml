@@ -1,0 +1,21 @@
+name: Reusable Blueprint Validation
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate blueprint
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d blueprint
+          test -d templates
+          test -d standards
+          echo "Blueprint validation OK"

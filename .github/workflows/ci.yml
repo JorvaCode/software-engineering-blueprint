@@ -1,0 +1,108 @@
+name: Blueprint CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  blueprint-validation:
+    name: Validate blueprint structure and content
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Validate blueprint
+        shell: bash
+        run: |
+          set -euo pipefail
+          failed=0
+
+          fail() {
+            echo "FAIL: $1"
+            failed=1
+          }
+
+          check_file() {
+            test -f "$1" || fail "missing file: $1"
+          }
+
+          check_dir() {
+            test -d "$1" || fail "missing directory: $1"
+          }
+
+          echo "== Repository structure =="
+          check_file README.md
+          check_dir blueprint
+          check_dir templates
+          check_dir standards
+          check_dir examples
+          check_dir blueprint/architecture/adr
+          check_dir .opencode/skills
+          check_dir .github/workflows
+
+          echo "== Blueprint phase documents (00-14) =="
+          for i in $(seq -w 0 14); do
+            if ! compgen -G "blueprint/${i}-*.md" > /dev/null; then
+              fail "missing phase document: blueprint/${i}-*.md"
+            fi
+          done
+
+          echo "== Templates =="
+          for t in requirement.md adr.md change.md; do
+            check_file "templates/${t}"
+          done
+
+          echo "== Standards =="
+          for s in definition-of-done.md git.md; do
+            check_file "standards/${s}"
+          done
+
+          echo "== Architecture decision records =="
+          for a in \
+            adr-001-blueprint-agnostic-ide-tecnologia.md \
+            adr-002-opencode-adaptador-opcional.md \
+            adr-003-blueprint-docs-as-code.md \
+            adr-004-modelo-distribucion-reutilizacion.md; do
+            check_file "blueprint/architecture/adr/${a}"
+          done
+
+          echo "== OpenCode skills =="
+          for s in blueprint blueprint-architecture blueprint-cicd blueprint-development blueprint-requirements; do
+            check_file ".opencode/skills/${s}/SKILL.md"
+          done
+
+          echo "== Empty markdown files =="
+          empty_files=$(find . -name '*.md' -type f -not -path './.git/*' -not -path './.opencode/node_modules/*' -empty | sort)
+          if [ -n "$empty_files" ]; then
+            echo "empty markdown files:"
+            echo "$empty_files"
+            failed=1
+          fi
+
+          echo "== Internal markdown links =="
+          while IFS= read -r doc; do
+            while IFS= read -r link; do
+              case "$link" in
+                *://*|mailto:*|'#'*) continue ;;
+              esac
+              target=${link%%#*}
+              [ -n "$target" ] || continue
+              full="$(dirname "$doc")/${target}"
+              if [ ! -f "$full" ]; then
+                if [ ! -f "${full}.md" ]; then
+                  fail "broken link '${link%%#*}' in '${doc#./}'"
+                fi
+              fi
+            done < <(grep -oE '\]\([^)]*\)' "$doc" | sed 's/^](//; s/)$//')
+          done < <(find . -name '*.md' -type f -not -path './.git/*' -not -path './.opencode/node_modules/*' | sort)
+
+          if [ "$failed" -eq 1 ]; then
+            echo "Blueprint validation FAILED"
+            exit 1
+          fi
+          echo "Blueprint validation OK"
