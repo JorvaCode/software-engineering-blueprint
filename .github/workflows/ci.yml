@@ -45,6 +45,20 @@ jobs:
           check_dir .opencode/skills
           check_dir .github/workflows
 
+          echo "== Installers =="
+          check_file scripts/blueprint-init.ps1
+          check_file scripts/blueprint-init.sh
+          for i in scripts/blueprint-init.ps1 scripts/blueprint-init.sh; do
+            if [ ! -s "$i" ]; then
+              fail "empty installer: $i"
+            fi
+          done
+
+          echo "== Directories that must be installable =="
+          for d in blueprint templates standards; do
+            check_dir "$d"
+          done
+
           echo "== Blueprint phase documents (00-14) =="
           for i in $(seq -w 0 14); do
             if ! compgen -G "blueprint/${i}-*.md" > /dev/null; then
