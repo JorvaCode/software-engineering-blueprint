@@ -12,7 +12,7 @@ Provide a tool-agnostic, language-agnostic and reusable engineering lifecycle th
 - Normative definition for each phase (blueprint/00-principles.md, blueprint/01-requirements.md .. blueprint/14-continuous-improvement.md).
 - Reusable artifacts: templates for requirements, ADRs and changes.
 - Engineering standards: Definition of Done, Git standard and Code Design standard.
-- Optional OpenCode adapter: skills discoverable from .opencode/skills/<name>/SKILL.md.
+- Optional OpenCode adapter: skills discoverable from `.opencode/skills/<name>/SKILL.md`.
 - Example CI workflow and reusable GitHub workflow (.github/workflows/).
 - Adoption examples and checklist (examples/).
 
@@ -29,7 +29,7 @@ Provide a tool-agnostic, language-agnostic and reusable engineering lifecycle th
 - FR-03: The blueprint shall provide reusable templates for requirements, ADRs and change descriptions.
 - FR-04: The blueprint shall provide engineering standards covering the Definition of Done, Git, and code design quality (SOLID and Clean Code as diagnostics, design patterns only when justified).
 - FR-05: The blueprint shall provide an example CI workflow and a reusable GitHub workflow that validate the blueprint structure.
-- FR-06: The blueprint shall provide an optional OpenCode adapter whose skills are automatically discoverable from .opencode/skills/<name>/SKILL.md.
+- FR-06: The blueprint shall provide an optional OpenCode adapter whose skills are automatically discoverable from `.opencode/skills/<name>/SKILL.md`.
 - FR-07: The blueprint shall provide adoption guidance and a checklist for new projects and teams.
 - FR-08: The blueprint shall declare its own version and release status (v1.0.0, initial reusable release).
 
@@ -46,7 +46,7 @@ Provide a tool-agnostic, language-agnostic and reusable engineering lifecycle th
 - Given the blueprint repository, when a project starts adoption, then it can copy the relevant directories (or reference the central repo) and follow the lifecycle end to end.
 - Given the full lifecycle, when a change progresses from requirement to delivery, then the required phase artifacts exist and each applicable quality gate is defined.
 - Given a phase artifact, when it is produced, then it follows the corresponding template (templates/requirement.md, templates/adr.md, templates/change.md).
-- Given the OpenCode adapter, when OpenCode is used, then the skills are discoverable from .opencode/skills/<name>/SKILL.md without further configuration.
+- Given the OpenCode adapter, when OpenCode is used, then the skills are discoverable from `.opencode/skills/<name>/SKILL.md` without further configuration.
 - Given the GitHub workflows, when CI runs on a valid repository, then the required blueprint structure files are validated successfully.
 - Given the Definition of Done, when a change is marked done, then all applicable criteria are satisfied and documented.
 - Given a change that introduces a design pattern, when the design is reviewed, then the problem it solves, the evidence, the cost of the simpler alternative and the scope of application are stated, and a change without patterns is not reported as a finding.

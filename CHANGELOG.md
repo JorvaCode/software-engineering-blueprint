@@ -6,20 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ## [Unreleased]
 
+### Added
+
+- **Licence** — the repository is now licensed under [Creative Commons Attribution 4.0 International](LICENSE) (CC BY 4.0), with the complete legal code. Previously the default copyright applied, which meant the reuse the project invites from its installers was not actually licensed.
+- **Repository governance** — `CONTRIBUTING.md` (working rules and order of authority for human contributors), `SECURITY.md` (private vulnerability reporting, with acknowledgement and triage targets), `CODE_OF_CONDUCT.md`, `.github/CODEOWNERS`, bug and change-proposal issue templates, and a pull request template that requires declaring the lifecycle phase and a falsifiability check on any new quality gate.
+- **`.editorconfig`** — encoding, line endings, indentation and final-newline rules.
+- **`markdownlint-cli` gate** — a `markdown-lint` CI job with the version pinned to `0.49.1`, configured through `.markdownlint.json`. The configuration records the house style: long lines allowed, compact headings and lists.
+- **ADR-007** — records the licence choice, the governance set, and why `lychee` and Vale were rejected for the documentation linting.
+
 ### Changed
 
 - **OpenCode skills reduced to routers** — `blueprint` and the four phase skills no longer duplicate the normative lifecycle. They now map each phase to its document in `blueprint/` and declare all paths as relative to the project root, so the adapter cannot silently drift from the core.
-- **README** — documents the skill/agent split, the agent location, and why the adapter ships no primary agent.
+- **README** — documents the skill/agent split, the agent location, why the adapter ships no primary agent, the governance files, and the licence.
+- **CI** — the structure check now asserts the governance files and that `LICENSE` carries the CC BY 4.0 legal code, and ADR-007 is a required record.
 
-### Added
+### Fixed
 
-- **`standards/code-design.md`** — design quality standard. SOLID and Clean Code are defined as diagnostics that only produce a finding when they name a concrete problem, and design patterns are admitted only when the design states the problem, the evidence, the cost of the simpler alternative and the scope of application. The absence of a pattern is never a defect.
-- **ADR-006** — records the decision to add design quality criteria to the lifecycle and the reasoning against both a catalogue of patterns and no criteria at all.
-- **Lifecycle integration** — principle 10 in `blueprint/00-principles.md`, pattern selection criteria in `blueprint/04-design.md`, a design quality rule in `blueprint/05-implementation.md`, two review items in `blueprint/07-code-review.md` and the automatable subset in `blueprint/08-security-quality.md`.
-- **`AGENTS.md`** — working rules for AI assistants in this repository: order of authority, on-demand phase loading, and the rule that `blueprint/` wins over any skill.
-- **`blueprint-orchestrator` OpenCode subagent** — autonomous full-lifecycle pass for readiness audits and per-phase gap reports, creating missing blueprint artifacts without touching application code.
-- **ADR-005** — records the decision to separate the interactive skill from the autonomous subagent, and to not ship a custom primary agent in the adapter.
-- **CI validation** — checks `.opencode/agents/` and the orchestrator agent definition, that the Code Design standard exists, that the phases which gate on it reference it, and that the skills do not restate it.
+- **Template placeholders** — the `<ID>`, `<Title>` and `<Decision title>` tokens in `templates/` are now marked as code, so they render as placeholders instead of being parsed as HTML.
+- **Consistency** — the `.opencode/skills/<name>/SKILL.md` path is marked as code in the two ADRs and the requirements document, where the rest of the repository already did so.
+- **Trailing newlines** — six files ended without a final newline.
 
 ## [1.0.0] - 2026-09-22
 

@@ -1,0 +1,69 @@
+name: Bug report
+description: Something in the blueprint is wrong, broken or inconsistent
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this. This repository holds documentation and
+        workflow definitions, not application code, so most defects are
+        inconsistencies between documents rather than runtime errors.
+
+        If this is a **security** issue, do not use this form. See
+        [SECURITY.md](../blob/main/SECURITY.md).
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where is the problem?
+      options:
+        - A lifecycle phase in `blueprint/`
+        - An engineering standard in `standards/`
+        - A template in `templates/`
+        - An Architecture Decision Record
+        - An installer (`scripts/`)
+        - A GitHub Actions workflow
+        - The OpenCode adapter (`.opencode/`)
+        - Documentation or README
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Exact file and line
+      description: For example `blueprint/03-architecture.md:18`.
+      placeholder: blueprint/00-principles.md:12
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should it say?
+      description: Quote the phase, the standard or the ADR that requires the correct behaviour.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What does it say?
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Why does it matter?
+      description: For example: a quality gate that cannot be falsified, or a contradiction between two normative documents.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Optional. What you would write instead.

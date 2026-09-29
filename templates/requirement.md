@@ -1,4 +1,4 @@
-# Requirement: <ID> — <Title>
+# Requirement: `<ID>` — `<Title>`
 
 ## Problem
 What problem are we solving?

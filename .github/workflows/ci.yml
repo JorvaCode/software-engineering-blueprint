@@ -9,6 +9,18 @@ permissions:
   contents: read
 
 jobs:
+  markdown-lint:
+    name: Lint markdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Lint markdown
+        # Pinned exactly. A floating tag here would let a new release change the
+        # gate without a change in this repository. See ADR-007.
+        run: npx --yes markdownlint-cli@0.49.1 "**/*.md"
+
   blueprint-validation:
     name: Validate blueprint structure and content
     runs-on: ubuntu-latest
@@ -45,6 +57,26 @@ jobs:
           check_dir .opencode/skills
           check_dir .opencode/agents
           check_dir .github/workflows
+
+          echo "== Governance (see ADR-007) =="
+          check_file LICENSE
+          check_file CONTRIBUTING.md
+          check_file SECURITY.md
+          check_file CODE_OF_CONDUCT.md
+          check_file .editorconfig
+          check_file .markdownlint.json
+          check_file .github/CODEOWNERS
+          check_file .github/PULL_REQUEST_TEMPLATE.md
+          check_file .github/ISSUE_TEMPLATE/bug_report.yml
+          check_file .github/ISSUE_TEMPLATE/feature_request.yml
+          if ! grep -q 'Attribution 4.0 International' LICENSE; then
+            fail "LICENSE does not contain the CC BY 4.0 legal code"
+          fi
+          for f in LICENSE CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md; do
+            if [ ! -s "$f" ]; then
+              fail "empty governance file: $f"
+            fi
+          done
 
           echo "== Installers =="
           check_file scripts/blueprint-init.ps1
@@ -84,7 +116,8 @@ jobs:
             adr-003-blueprint-docs-as-code.md \
             adr-004-modelo-distribucion-reutilizacion.md \
             adr-005-skill-agente-adaptor-opencode.md \
-            adr-006-calidad-diseno-codigo-solid-clean-code-patrones.md; do
+            adr-006-calidad-diseno-codigo-solid-clean-code-patrones.md \
+            adr-007-licencia-y-gobernanza-del-repositorio.md; do
             check_file "blueprint/architecture/adr/${a}"
           done
 

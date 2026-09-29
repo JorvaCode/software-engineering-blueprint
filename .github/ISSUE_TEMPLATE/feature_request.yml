@@ -1,0 +1,92 @@
+name: Change proposal
+description: Propose a change to the lifecycle, a standard or a template
+labels:
+  - proposal
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A change here alters the process every adopting project follows. The more
+        specific you are about the problem, the faster it can be reviewed.
+
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Which lifecycle phase does this affect?
+      options:
+        - 00 Principles
+        - 01 Requirements
+        - 02 Analysis
+        - 03 Architecture
+        - 04 Technical design
+        - 05 Implementation
+        - 06 Testing
+        - 07 Code review
+        - 08 Security and quality
+        - 09 Continuous integration
+        - 10 Packaging
+        - 11 Continuous delivery
+        - 12 Deployment
+        - 13 Observability
+        - 14 Continuous improvement
+        - Cross-phase (several phases)
+        - Repository governance, not a lifecycle phase
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: >
+        Describe the failure, not the solution. What goes wrong today, for whom,
+        and how often. A proposal that cannot name a concrete problem is a
+        preference, and preferences are declined.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: What is the evidence?
+      description: >
+        A standard it conflicts with, a gate that cannot be falsified, an
+        inconsistency between two documents, or experience applying the blueprint.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: adr
+    attributes:
+      label: Does this need an ADR?
+      description: >
+        Required if it is a significant architectural decision: hard to reverse,
+        constrains future phases, or introduces a dependency or a standard.
+      options:
+        - Yes, an ADR is needed
+        - No, this is a clarification or a defect fix
+        - Unsure
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Which files change, and what the new text says.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Including "do nothing" and its cost.
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Who has to change something?
+      description: For example: every project that already installed the blueprint.

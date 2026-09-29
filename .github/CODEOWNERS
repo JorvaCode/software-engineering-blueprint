@@ -1,0 +1,24 @@
+# Code owners for this repository.
+#
+# Ownership is requested on review, not on push: the repository is public and
+# contributors are not expected to hold write access.
+#
+# TODO(owner): the team below must exist in the JorvaCode organisation with write
+# access, or be replaced with a personal handle. An entry that matches no user or
+# team is silently ignored by GitHub, which fails open.
+
+# Default owner for everything in the repository.
+*                               @JorvaCode/blueprint-maintainers
+
+# The normative lifecycle. A change here changes the process every adopting
+# project follows, so it needs an owner beyond the contributor.
+blueprint/                      @JorvaCode/blueprint-maintainers
+standards/                      @JorvaCode/blueprint-maintainers
+templates/                      @JorvaCode/blueprint-maintainers
+
+# Executable content. These run in CI or on a contributor's machine.
+.github/workflows/             @JorvaCode/blueprint-maintainers
+scripts/                        @JorvaCode/blueprint-maintainers
+
+# The optional adapter. Not a source of truth, so it needs lighter review.
+.opencode/                      @JorvaCode/blueprint-maintainers

@@ -43,9 +43,13 @@ Design quality is checked, not assumed. `standards/code-design.md` treats SOLID 
 - `templates/` — reusable project artifacts.
 - `standards/` — engineering standards.
 - `AGENTS.md` — working rules for AI assistants in this repository.
+- `CONTRIBUTING.md` — working rules for human contributors, and the order of authority.
+- `SECURITY.md` — how to report a vulnerability privately.
+- `CODE_OF_CONDUCT.md` — expectations for participants.
 - `.opencode/skills/` — optional OpenCode adapter (routers to `blueprint/`).
 - `.opencode/agents/` — optional OpenCode subagent for autonomous blueprint passes.
 - `.github/workflows/` — example CI workflow and reusable workflow.
+- `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/CODEOWNERS` — contribution workflow.
 - `examples/` — examples for adopting the blueprint.
 
 ## Installation
@@ -89,3 +93,13 @@ Blueprint version: `1.0.0`
 Status: Initial reusable release.
 
 See [CHANGELOG.md](CHANGELOG.md) for the release history.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). The gate is `.github/workflows/ci.yml`; it validates repository structure, phase documents, templates, standards, ADRs, the OpenCode adapter, every internal Markdown link, and the prose itself via `markdownlint-cli`.
+
+Two maintainer-owned placeholders must be completed before this repository is published: the private reporting contact in [SECURITY.md](SECURITY.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and the team in [.github/CODEOWNERS](.github/CODEOWNERS). See [ADR-007](blueprint/architecture/adr/adr-007-licencia-y-gobernanza-del-repositorio.md).
+
+## License
+
+This work is licensed under the [Creative Commons Attribution 4.0 International](LICENSE) licence (CC BY 4.0). You may share and adapt it, including commercially, provided you give appropriate credit, link the licence and indicate changes.

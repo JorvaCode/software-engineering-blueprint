@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/JorvaCode/software-engineering-blueprint/security/advisories/new
+    about: Report privately. Never file a security issue as a public issue.
+  - name: Code of Conduct report
+    url: https://github.com/JorvaCode/software-engineering-blueprint/blob/main/CODE_OF_CONDUCT.md
+    about: Read the Code of Conduct and how to report unacceptable behaviour.
