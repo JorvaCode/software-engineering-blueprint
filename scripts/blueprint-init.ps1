@@ -3,12 +3,17 @@
   Installs the Software Engineering Blueprint into a target project directory.
 
 .DESCRIPTION
-  Copies the blueprint/, templates/ and standards/ directories (and .opencode/
-  if present in the blueprint repository) into the destination directory.
-  Does not overwrite existing files without warning.
+  Copies the directories named in the install allowlist (blueprint/, templates/,
+  standards/ and, when present, .opencode/agents/ and .opencode/skills/) into the
+  destination directory, and writes .blueprint-install.json recording the version
+  that was installed.
 
-  Tool- and IDE-agnostic: requires no Node, no Python and no external
-  dependencies.
+  The allowlist is deliberate: copying a directory wholesale ships whatever
+  happens to be in the maintainer's working copy, and a consumer that receives
+  someone else's package.json is a consumer with a bug they did not write.
+  See ADR-011.
+
+  Does not overwrite existing content without warning.
 
 .EXAMPLE
   .\scripts\blueprint-init.ps1 C:\proyectos\mi-app
@@ -21,9 +26,26 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-function Write-Info    { Write-Host "[blueprint-init] $($args -join ' ')" }
-function Write-Warn    { Write-Host "[blueprint-init] WARNING: $($args -join ' ')" -ForegroundColor Yellow }
-function Write-Err     { Write-Host "[blueprint-init] ERROR: $($args -join ' ')" -ForegroundColor Red }
+# Progress and warnings go to stdout, errors to stderr.
+#
+# Write-Output, not Write-Host and not [Console]::Out. Write-Host writes to the
+# information stream and [Console]::Out writes around PowerShell entirely; neither
+# reaches the success stream, so a caller cannot capture them:
+#   $out = & .\blueprint-init.ps1 C:\x        # $out would be empty
+# That makes the installer untestable and unusable from another script, and it
+# would behave differently from blueprint-init.sh, which writes to stdout.
+# Verified: Write-Host is only reachable via 6>&1, Write-Output via plain capture.
+# See ADR-011.
+function Write-Info {
+    Write-Output "[blueprint-init] $($args -join ' ')"
+}
+function Write-Warn {
+    Write-Output "[blueprint-init] WARNING: $($args -join ' ')"
+}
+function Write-Err {
+    # Real stderr, so it lands on fd 2 when the script is run as a child process.
+    [Console]::Error.WriteLine("[blueprint-init] ERROR: $($args -join ' ')")
+}
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $blueprintRoot = Split-Path -Parent $scriptDir
@@ -57,58 +79,106 @@ if (-not (Test-Path -LiteralPath $dest)) {
     }
 }
 
-$requiredDirs = @('blueprint', 'templates', 'standards')
-$optionalDirs = @()
-if (Test-Path -LiteralPath (Join-Path $blueprintRoot '.opencode')) {
-    $optionalDirs = @('.opencode')
-}
+# The install allowlist. Adding an entry here is a distribution decision and
+# needs an ADR; nothing else is copied, ever.
+$allowlist = @('blueprint', 'templates', 'standards', '.opencode/agents', '.opencode/skills')
 
 $installed = @()
 $skipped = @()
 $failed = $false
 
-foreach ($dir in ($requiredDirs + $optionalDirs)) {
-    $src = Join-Path $blueprintRoot $dir
-    $dstItem = Join-Path $dest $dir
+foreach ($entry in $allowlist) {
+    $src = Join-Path $blueprintRoot $entry
+    $dstItem = Join-Path $dest $entry
 
-    if (-not (Test-Path -LiteralPath $src)) {
+    # The OpenCode adapter is optional; a copy of the blueprint without it is a
+    # valid install, because the adapter is not a dependency (ADR-002).
+    $isOptional = $entry.StartsWith('.opencode/')
+    if (-not (Test-Path -LiteralPath $src -PathType Container)) {
+        if ($isOptional) {
+            Write-Info "skip       $entry/ (not present in source)"
+            continue
+        }
         Write-Err "required source directory missing: $src"
         $failed = $true
         continue
     }
 
     if (Test-Path -LiteralPath $dstItem) {
-        Write-Warn "'$dir' already exists in destination. Skipping to avoid overwriting existing content."
-        $skipped += $dir
+        Write-Warn "'$entry' already exists in destination. Skipping to avoid overwriting existing content."
+        $skipped += $entry
         continue
+    }
+
+    $parent = Split-Path -Parent $dstItem
+    if ($parent -and -not (Test-Path -LiteralPath $parent)) {
+        try {
+            New-Item -ItemType Directory -Path $parent -Force | Out-Null
+        } catch {
+            Write-Err "cannot create '$parent'."
+            $failed = $true
+            continue
+        }
     }
 
     try {
         Copy-Item -LiteralPath $src -Destination $dstItem -Recurse
-
-        # Do not ship dependency/build artifacts if the local source has them
-        # (they are gitignored and are not part of the blueprint content).
-        $nodeModules = Join-Path $dstItem 'node_modules'
-        if (Test-Path -LiteralPath $nodeModules) {
-            Remove-Item -LiteralPath $nodeModules -Recurse -Force
-        }
-
-        $installed += $dir
-        Write-Host "[blueprint-init] installed  $dir"
+        $installed += $entry
+        Write-Info "installed  $entry/"
     } catch {
-        Write-Err "failed to copy '$dir': $($_.Exception.Message)"
+        Write-Err "failed to copy '$entry': $($_.Exception.Message)"
+        $failed = $true
+    }
+}
+
+# Record what was installed, so a consumer can tell which blueprint it has and
+# whether it has been modified since. The version is the identifier; there is no
+# content hash because computing one would need a tool this installer does not
+# promise to have. See ADR-011.
+$versionFile = Join-Path $blueprintRoot 'VERSION'
+if (Test-Path -LiteralPath $versionFile) {
+    $blueprintVersion = (Get-Content -LiteralPath $versionFile -TotalCount 1).Trim()
+} else {
+    $blueprintVersion = 'unknown'
+}
+
+$manifestPath = Join-Path $dest '.blueprint-install.json'
+if (Test-Path -LiteralPath $manifestPath) {
+    Write-Warn "'.blueprint-install.json' already exists. Leaving it untouched."
+} else {
+    $entries = ($allowlist | ForEach-Object { '        "{0}"' -f $_ }) -join ",`n"
+    $manifest = @"
+{
+  "blueprint": "software-engineering-blueprint",
+  "version": "$blueprintVersion",
+  "installedAt": "$([DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ'))",
+  "installer": "scripts/blueprint-init.ps1",
+  "entries": [
+$entries
+  ]
+}
+"@
+    try {
+        # No BOM: the manifest is read by tools other than PowerShell. An
+        # explicit UTF8Encoding is the only way to get that from WriteAllText;
+        # Set-Content -Encoding utf8 emits one in Windows PowerShell.
+        $utf8NoBom = New-Object System.Text.UTF8Encoding -ArgumentList $false
+        [System.IO.File]::WriteAllText($manifestPath, $manifest, $utf8NoBom)
+        Write-Info "wrote      .blueprint-install.json (version $blueprintVersion)"
+    } catch {
+        Write-Err "failed to write .blueprint-install.json: $($_.Exception.Message)"
         $failed = $true
     }
 }
 
 Write-Info ""
-Write-Info "Installed: $($installed.Count) directory/directories"
+Write-Info "Installed: $($installed.Count) item(s)"
 foreach ($d in $installed) {
-    Write-Host "  - $d"
+    Write-Info "  - $d"
 }
 Write-Info "Skipped (already present): $($skipped.Count)"
 foreach ($d in $skipped) {
-    Write-Host "  - $d"
+    Write-Info "  - $d"
 }
 
 if ($failed) {

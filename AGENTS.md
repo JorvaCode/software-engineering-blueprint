@@ -78,3 +78,9 @@ All paths are relative to this repository root.
 `.github/workflows/ci.yml` is the gate. It validates repository structure, phase documents,
 templates, standards, ADRs, the OpenCode adapter and every internal markdown link. Run it
 before opening a pull request, or push to the branch and let Actions report.
+
+The gate itself is `scripts/validate-blueprint.sh`, not inline in the workflow. Run it
+locally with `bash scripts/validate-blueprint.sh`; it needs no Actions, no Node and no
+network. `ci.yml` and the reusable workflow both call that one file, so a change to the
+gate is made once. The installers have their own suites, `scripts/test-installers.sh` and
+`scripts/test-installers.ps1`, which run both installers against a real destination.

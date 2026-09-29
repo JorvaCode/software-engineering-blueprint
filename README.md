@@ -74,6 +74,41 @@ Design quality is checked, not assumed. `standards/code-design.md` treats SOLID 
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/CODEOWNERS` — contribution workflow.
 - `examples/` — examples for adopting the blueprint.
 
+The blueprint is IDE-agnostic: it can be used from IntelliJ IDEA, Visual Studio, VS Code or any other IDE. It is also technology-agnostic at the process level — each project chooses its own language, framework, cloud, registry and deployment platform.
+
+The OpenCode integration is optional and automatically discoverable. OpenCode is an adapter, not a dependency: the blueprint works perfectly without it.
+
+Two kinds of OpenCode component are provided:
+
+- **Skills** (`.opencode/skills/<name>/SKILL.md`) — routers used interactively. They point at the normative phase documents in `blueprint/` and never restate them. Use the `blueprint` skill for guided, conversational work, or a phase skill (`blueprint-requirements`, `blueprint-architecture`, `blueprint-development`, `blueprint-cicd`) for a single phase.
+- **Agent** (`.opencode/agents/blueprint-orchestrator.md`) — a subagent for autonomous passes with no interactive user: readiness audits, per-phase gap reports, and creating missing blueprint artifacts. It does not modify application code.
+
+See [ADR-005](blueprint/architecture/adr/adr-005-skill-agente-adaptor-opencode.md) for the rationale behind the split.
+
+There is deliberately **no custom primary agent**. `scripts/blueprint-init.ps1` and `scripts/blueprint-init.sh` install `.opencode/agents/` and `.opencode/skills/` into every adopting project, so a primary agent would appear in the agent cycle of every consumer — the adapter would impose a default on teams that only asked for guidance. Interactive work uses the built-in primary agent plus the `blueprint` skill. See [AGENTS.md](AGENTS.md) for the working rules in this repository.
+
+GitHub Actions workflows belong in `.github/workflows/`.
+
+## Validating
+
+The validation gate lives in [`scripts/validate-blueprint.sh`](scripts/validate-blueprint.sh), not inline in a workflow. It runs in this repository's CI, it runs in the reusable workflow offered to consumers, and it runs locally with no Actions involved:
+
+```bash
+bash scripts/validate-blueprint.sh
+```
+
+One implementation, three callers. A gate copied into two workflows is a gate that will eventually disagree with itself, and the copy nobody looks at is the one that goes stale.
+
+The installers are covered by their own suites, `scripts/test-installers.sh` and `scripts/test-installers.ps1`, which run both installers against a real temporary destination. An installer that is never run is not tested, and reading one does not reveal that its output cannot be captured.
+
+## Version
+
+The installed blueprint version is declared in the [`VERSION`](VERSION) file at the root. It carries the version this working tree produces, including a `-dev` suffix while the [CHANGELOG.md](CHANGELOG.md) has work under `[Unreleased]`.
+
+Each installer writes `.blueprint-install.json` into the destination, recording the version that was installed, when, by which installer, and which entries were applied. A project can therefore answer "which blueprint is this and has it been modified since" without searching. The installer never overwrites an existing manifest, because a hand-edited one may be more accurate than the one it would write.
+
+There is no content hash in the manifest. `sha256sum` is not POSIX — macOS calls it `shasum` — and the installers promise not to need anything external. The version is the identifier, and it is the one the project controls. See [ADR-011](blueprint/architecture/adr/adr-011-distribucion-versionada-y-manifiesto.md).
+
 ## Installation
 
 Install the blueprint into an existing project with the provided installers. The destination directory is created if it does not exist, and existing content is never overwritten without warning.
@@ -90,31 +125,11 @@ Linux/macOS:
 ./scripts/blueprint-init.sh /home/user/proyectos/mi-app
 ```
 
+The installers copy an **allowlist** of entries, not directory trees: `blueprint/`, `templates/`, `standards/`, and `.opencode/agents/` and `.opencode/skills/` when the adapter is present. Nothing else is copied, ever — no build manifests, no lockfiles, no `node_modules`. The list is the executable definition of what the blueprint is; adding an entry to it is a distribution decision and needs an ADR.
+
 ## Quick start
 
 Copy the relevant directories into a project or keep this repository as a centralized blueprint repository.
-
-The blueprint is IDE-agnostic: it can be used from IntelliJ IDEA, Visual Studio, VS Code or any other IDE. It is also technology-agnostic at the process level — each project chooses its own language, framework, cloud, registry and deployment platform.
-
-The OpenCode integration is optional and automatically discoverable. OpenCode is an adapter, not a dependency: the blueprint works perfectly without it.
-
-Two kinds of OpenCode component are provided:
-
-- **Skills** (`.opencode/skills/<name>/SKILL.md`) — routers used interactively. They point at the normative phase documents in `blueprint/` and never restate them. Use the `blueprint` skill for guided, conversational work, or a phase skill (`blueprint-requirements`, `blueprint-architecture`, `blueprint-development`, `blueprint-cicd`) for a single phase.
-- **Agent** (`.opencode/agents/blueprint-orchestrator.md`) — a subagent for autonomous passes with no interactive user: readiness audits, per-phase gap reports, and creating missing blueprint artifacts. It does not modify application code.
-
-See [ADR-005](blueprint/architecture/adr/adr-005-skill-agente-adaptor-opencode.md) for the rationale behind the split.
-
-There is deliberately **no custom primary agent**. `scripts/blueprint-init.ps1` and `scripts/blueprint-init.sh` copy `.opencode/` into every installing project, so a primary agent would appear in the agent cycle of every consumer — the adapter would impose a default on teams that only asked for guidance. Interactive work uses the built-in primary agent plus the `blueprint` skill. See [AGENTS.md](AGENTS.md) for the working rules in this repository.
-
-GitHub Actions workflows belong in `.github/workflows/`.
-
-## Version
-
-Blueprint version: `1.0.0`
-Status: Initial reusable release.
-
-See [CHANGELOG.md](CHANGELOG.md) for the release history.
 
 ## Contributing
 

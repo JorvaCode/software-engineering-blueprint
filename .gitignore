@@ -21,3 +21,19 @@ target/
 .env
 .env.*
 !.env.example
+
+# OpenCode adapter build artifacts.
+# These are local to whoever happens to have run the tooling. The installers use
+# an allowlist, so they are never shipped to a consumer; they are ignored here so
+# they do not show up as untracked noise either. This block replaces a former
+# .opencode/.gitignore, which ignored itself and could therefore never be
+# committed. See ADR-011.
+.opencode/node_modules/
+.opencode/package.json
+.opencode/package-lock.json
+.opencode/bun.lock
+.opencode/yarn.lock
+
+# Adoption manifests written into a consumer project by the installer. This
+# repository is not a consumer, so one appearing here is by definition not ours.
+.blueprint-install.json

@@ -1,5 +1,21 @@
 name: Reusable Blueprint Validation
 
+# A consuming project calls this to validate the blueprint it installed.
+#
+#   jobs:
+#     blueprint:
+#       uses: JorvaCode/software-engineering-blueprint/.github/workflows/reusable-blueprint-validation.yml@v1.0.0
+#
+# The validation itself is not duplicated here: this workflow runs the same
+# scripts/validate-blueprint.sh that the blueprint's own CI runs. Two copies of a
+# gate is one more gate to keep in sync, and the copy that drifts is the one
+# nobody is looking at. See ADR-011.
+#
+# The minimum required checks are the structural ones: the installed directories
+# exist and the information items are declared. A consumer is not the blueprint
+# repository, so the checks that only make sense here (ADRs, governance, the
+# VERSION file, this repository's adapter) are out of scope for it.
+
 on:
   workflow_call:
 
@@ -8,14 +24,61 @@ permissions:
 
 jobs:
   validate:
+    name: Validate installed blueprint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - name: Validate blueprint
         shell: bash
         run: |
-          set -euo pipefail
-          test -d blueprint
-          test -d templates
-          test -d standards
+          set -uo pipefail
+          failed=0
+
+          fail() {
+            echo "FAIL: $1"
+            failed=1
+          }
+
+          # The structural floor every consumer needs.
+          for d in blueprint templates standards; do
+            test -d "$d" || fail "missing directory: $d"
+          done
+
+          # Every process phase has to declare its information items, or the
+          # blueprint is not the blueprint. Phase 00 states principles and is
+          # excluded; see standards/information-items.md.
+          for i in $(seq -w 0 14); do
+            compgen -G "blueprint/${i}-*.md" > /dev/null \
+              || fail "missing phase document: blueprint/${i}-*.md"
+          done
+          for i in $(seq -w 1 14); do
+            for doc in blueprint/${i}-*.md; do
+              [ -f "$doc" ] || { fail "missing phase document: blueprint/${i}-*.md"; continue; }
+              grep -qx '## Information items' "$doc" \
+                || fail "phase does not declare '## Information items': ${doc}"
+              for sub in '### Inputs' '### Outputs'; do
+                grep -qx "$sub" "$doc" || fail "phase missing '${sub}': ${doc}"
+              done
+            done
+          done
+
+          # A consumer that has modified its copy should be able to see that,
+          # and a consumer that has not should be told which version it has.
+          if [ -f .blueprint-install.json ]; then
+            if ! grep -q '"version"' .blueprint-install.json; then
+              fail "adoption manifest does not record a version: .blueprint-install.json"
+            fi
+            echo "Installed blueprint version:"
+            sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/  \1/p' \
+              .blueprint-install.json
+          else
+            echo "NOTE: no .blueprint-install.json; this copy was not installed with the shipped installer."
+          fi
+
+          if [ "$failed" -eq 1 ]; then
+            echo "Blueprint validation FAILED"
+            exit 1
+          fi
           echo "Blueprint validation OK"
