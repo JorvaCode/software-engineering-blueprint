@@ -71,7 +71,7 @@ Design quality is checked, not assumed. `standards/code-design.md` treats SOLID 
 - `.opencode/skills/` — optional OpenCode adapter (routers to `blueprint/`).
 - `.opencode/agents/` — optional OpenCode subagent for autonomous blueprint passes.
 - `.github/workflows/` — example CI workflow and reusable workflow.
-- `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/CODEOWNERS` — contribution workflow.
+- `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md` — contribution workflow.
 - `examples/` — examples for adopting the blueprint.
 
 The blueprint is IDE-agnostic: it can be used from IntelliJ IDEA, Visual Studio, VS Code or any other IDE. It is also technology-agnostic at the process level — each project chooses its own language, framework, cloud, registry and deployment platform.
@@ -137,7 +137,7 @@ Copy the relevant directories into a project or keep this repository as a centra
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The gate is `.github/workflows/ci.yml`; it validates repository structure, phase documents, templates, standards, ADRs, the OpenCode adapter, every internal Markdown link, and the prose itself via `markdownlint-cli`.
 
-Two maintainer-owned placeholders must be completed before this repository is published: the private reporting contact in [SECURITY.md](SECURITY.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and the team in [.github/CODEOWNERS](.github/CODEOWNERS). See [ADR-007](blueprint/architecture/adr/adr-007-licencia-y-gobernanza-del-repositorio.md).
+Reporting and conduct go through GitHub's private channels, so neither needs a mailbox that a maintainer would have to remember to watch. See [SECURITY.md](SECURITY.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). There is no `CODEOWNERS` file: with a single maintainer there is no second account to name, and an entry that matches no account is ignored by GitHub without a warning, which would look like review enforcement while enforcing nothing. The file returns as a one-line addition when there is someone else to name. See [ADR-007](blueprint/architecture/adr/adr-007-licencia-y-gobernanza-del-repositorio.md).
 
 ## License
 

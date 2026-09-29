@@ -1,10 +1,10 @@
 # ADR-010: Vistas, partes interesadas y escenarios de atributo de calidad
 
-- **Status**: Accepted
-- **Date**: 2026-09-29
-- **Scope**: `blueprint/03-architecture.md`, `blueprint/04-design.md`, `blueprint/06-testing.md`, `standards/terms.md`
+## Status
+Accepted
 
-## Contexto
+## Context
+Ámbito: `blueprint/03-architecture.md`, `blueprint/04-design.md`, `blueprint/06-testing.md`, `standards/terms.md`.
 
 `03-architecture.md` listaba diez aspectos que había que considerar: límites del
 sistema, componentes, dependencias, APIs, propiedad de datos, patrones de integración,
@@ -24,7 +24,28 @@ La ausencia de un vocabulario compartido agravaba el problema. «Arquitectura» 
 diez campos distintos significa diez cosas, y dos revisores usando la palabra con
 significados distintos llegaban al mismo veredicto solo por casualidad.
 
-## Decisión
+## Options considered
+
+**Opción A — ATAM completo.** El método de ATAM (SEI) sería el objetivo: priorizar
+concerns, evaluar con un panel, producir un score. Se descartó por desproporción con
+mucha diferencia. ATAM presupone un taller con participantes, agendas de días y un
+facilitador; la mayoría de los cambios de este repositorio son de un día y no justifican
+esa ceremonia. Un blueprint que exige un taller para un cambio pequeño deja de usarse.
+
+**Opción B — solo stakeholders y concerns, sin escenarios.** Es la mitad de lo
+necesario y ya habría mejorado la fase. Se descartó porque deja el hueco principal abierto:
+el umbral de la fase 01 sigue sin llegar a la decisión estructural, y esa era la
+consecuencia grave.
+
+**Opción C — vocabulario 42010 en alcance completo.** Definir vista, modelo y
+correspondencia con la generalidad del estándar. Se descartó por el mismo motivo que A:
+proporción. Se adopta el vocabulario, recortado a lo que una gate puede comprobar.
+
+**Opción D — nada.** La lista de diez aspectos ya funciona como lista de comprobación.
+Se descartó: es exactamente el patrón que este repositorio ya critica en otros sitios, un
+checklist que no puede fallar porque no nombra criterio.
+
+## Decision
 
 La fase 03 incorpora el vocabulario de **ISO/IEC/IEEE 42010:2022** (*Software, systems
 and enterprise — Architecture description*) con alcance deliberadamente estrecho:
@@ -49,28 +70,9 @@ por separado, y la fase 06 registra cuáles response measures están verificadas
 qué check. Sin esas dos conexiones el mecanismo sería decorativo: la fase 03 produciría
 escenarios que nadie ejecutaría.
 
-## Alternativas consideradas
+## Consequences
 
-**Opción A — ATAM completo.** El método de ATAM (SEI) sería el objetivo: priorizar
-concerns, evaluar con un panel, producir un score. Se descartó por desproporción con
-mucha diferencia. ATAM presupone un taller con participantes, agendas de días y un
-facilitador; la mayoría de los cambios de este repositorio son de un día y no justifican
-esa ceremonia. Un blueprint que exige un taller para un cambio pequeño deja de usarse.
-
-**Opción B — solo stakeholders y concerns, sin escenarios.** Es la mitad de lo
-necesario y ya habría mejorado la fase. Se descartó porque deja el hueco principal abierto:
-el umbral de la fase 01 sigue sin llegar a la decisión estructural, y esa era la
-consecuencia grave.
-
-**Opción C — vocabulario 42010 en alcance completo.** Definir vista, modelo y
-correspondencia con la generalidad del estándar. Se descartó por el mismo motivo que A:
-proporción. Se adopta el vocabulario, recortado a lo que una gate puede comprobar.
-
-**Opción D — nada.** La lista de diez aspectos ya funciona como lista de comprobación.
-Se descartó: es exactamente el patrón que este repositorio ya critica en otros sitios, un
-checklist que no puede fallar porque no nombra criterio.
-
-## Consecuencias
+### Positive
 
 - El umbral de un requisito no funcional tiene ahora un camino hasta la decisión
   estructural, y la fase 06 dice si está verificado. Un concern con umbral y sin escenario
@@ -81,15 +83,15 @@ checklist que no puede fallar porque no nombra criterio.
   descripción no sirve a todos los concerns, no un objetivo a sí mismo: el
   `blueprint/00-principles.md` principio 10 dice que la ausencia de un patrón no es un
   defecto, y aplica igual aquí.
-- `standards/terms.md` crece con diez términos. Es un coste real y aceptado: son los
-  términos que la gate necesita para ser falsable, y sin ellos volveríamos a «arquitectura»
-  como palabra única.
 - Sensibilidad se registra cuando la response measure no es estable en el entorno
   declarado, porque un diseño que cumple su umbral a una carga que nadie ejerce no lo ha
   cumplido.
 
-### Lo que este ADR no hace
+### Negative / trade-offs
 
+- `standards/terms.md` crece con diez términos. Es un coste real y aceptado: son los
+  términos que la gate necesita para ser falsable, y sin ellos volveríamos a «arquitectura»
+  como palabra única.
 - **No introduce un taller, un score ni un ranking de atributos.** ATAM y similares
   quedan fuera de forma deliberada.
 - **No crea una plantilla nueva.** Los escenarios son una tabla de seis campos dentro de
@@ -101,3 +103,6 @@ checklist que no puede fallar porque no nombra criterio.
   obligación no se lee.
 - **No añade requisitos no funcionales al blueprint.** Las fases 04 y 06 solo pasan a
   consumir lo que la 03 ya produce.
+
+## Date
+2026-09-29

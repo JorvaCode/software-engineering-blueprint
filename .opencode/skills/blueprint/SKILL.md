@@ -55,6 +55,19 @@ All paths below are relative to the project root.
 6. Close against `standards/definition-of-done.md`, `standards/git.md` and
    `standards/code-design.md`.
 
+## Standards
+
+The standards in `standards/` apply to every change, not only to one phase. Load the ones
+the change needs; a standard that is never routed to is a standard nobody reads.
+
+- `standards/definition-of-done.md` — the criteria a change is closed against.
+- `standards/git.md` — branches, commits and pull requests.
+- `standards/code-design.md` — design quality, SOLID, Clean Code and pattern selection.
+- `standards/normative-language.md` — modality, and how to write a gate that can fail.
+- `standards/terms.md` — the vocabulary; load it before interpreting a term the phase
+  documents do not define.
+- `standards/information-items.md` — what a phase artifact shall contain.
+
 ## Phase skills
 
 Load these when a single phase needs focused attention:

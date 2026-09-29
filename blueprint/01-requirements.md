@@ -1,7 +1,7 @@
 # 01 — Requirements Specification
 
 ## Objective
-Convert a business or technical need into a clear, testable specification.
+Convert a business or technical need into a specification whose acceptance criteria a third party can decide.
 
 ## Information items
 ### Inputs
@@ -13,13 +13,13 @@ Convert a business or technical need into a clear, testable specification.
 ### Outputs
 - **Problem statement** — the need, the affected parties, and why it matters now. Use `templates/requirement.md`.
 - **Scope** — what is in scope and, explicitly, what is not.
-- **Functional requirements** — numbered `FR-nn`, each independently testable and each stating one behaviour.
+- **Functional requirements** — numbered `FR-nn`, each independently decidable by a single test and each stating one behaviour.
 - **Non-functional requirements** — numbered `NFR-nn`, each naming the quality attribute it constrains and a threshold where one applies.
 - **Acceptance criteria** — at least one per functional requirement, written so a test can fail against them, each naming its verification method.
 - **Risks and assumptions** — each assumption stating what breaks if it is false.
 
 ## Quality gate
-Every functional requirement in `templates/requirement.md` is numbered, testable and feasible, and each has at least one acceptance criterion that names its verification method. A reviewer who did not write the requirement can write the test that decides it, and reaches the same verdict.
+Every functional requirement in `templates/requirement.md` carries an `FR-nn` identifier, states one behaviour, and has at least one acceptance criterion that names both the observable condition that decides it and the method that verifies that condition. A reviewer who did not write the requirement writes the test that decides it from the artifact alone, and reaches the same verdict.
 
 ## Template
 Use `templates/requirement.md`.

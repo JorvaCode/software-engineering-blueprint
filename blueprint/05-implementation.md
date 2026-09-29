@@ -25,4 +25,4 @@ Implement the approved design in small, reviewable increments.
 - **Documentation updates** — the documents this change makes wrong, updated in the same change.
 
 ## Quality gate
-The change builds, the tests pass, the conformance record is clean, and the change is reviewable on its own. Design quality is recorded against `standards/code-design.md`, or explicitly reported as having no findings. A reviewer who did not pair on the change reaches the same verdict from the build output and the conformance record.
+The change builds, the tests pass, and the conformance record for the changed paths holds no finding the change introduced. Design quality is recorded against `standards/code-design.md`, or the change states that the check produced no finding. A reviewer who did not pair on the change reaches the same verdict from the build output and the conformance record alone.

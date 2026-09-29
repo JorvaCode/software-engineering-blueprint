@@ -56,5 +56,18 @@ La configuración de `markdownlint-cli` desactiva `MD013` (longitud de línea), 
 - `.github/CODEOWNERS` requiere que el equipo `@JorvaCode/blueprint-maintainers` exista en la organización. Una entrada que no resuelve a ningún usuario o equipo se ignora en silencio, y por eso también queda marcada como pendiente.
 - La plantilla de pull request es más larga. Es intencionado: obliga a declarar la fase y a enumerar las comprobaciones antes de que un revisor las pida.
 
+Resuelto el 2026-09-29. Los tres puntos pendientes de este ADR se cerraron sin inventar un
+mantenimiento que nadie se comprometa a asumir:
+
+- Los dos ficheros de reporte ya no piden un buzón. Ambos enrutan por canales privados de
+  GitHub —el botón *Report a vulnerability* y *Report abuse* de la organización—, que no
+  requieren que una dirección esté vigilada. La ausencia del botón en `SECURITY.md` se
+  declara como un hueco de configuración del mantenedor, no como una invitación a publicar
+  el reporte.
+- `.github/CODEOWNERS` se eliminó. Con un solo mantenedor no hay una segunda cuenta que
+  nombrar, y un fichero de propietarios que no resuelve a nadie se parece a un control de
+  revisión y no protege de nada. Regresa como un fichero de una línea cuando exista otra
+  persona que nombrar.
+
 ## Date
 2026-09-29

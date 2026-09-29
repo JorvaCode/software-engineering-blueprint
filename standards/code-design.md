@@ -77,7 +77,7 @@ ADR when the decision is architectural) states all four:
 2. **The evidence it is real.** Occurrences today, or a committed requirement that
    produces them. A hypothetical future is not evidence.
 3. **The cost of the simpler alternative.** The solution without the pattern, and why it
-   is not enough. If no simpler alternative was considered, the justification is incomplete.
+   is not enough. If no simpler alternative is named and rejected, the justification is incomplete.
 4. **The scope of application.** Where the pattern applies and where it does not. A pattern
    that is not bounded spreads by imitation.
 

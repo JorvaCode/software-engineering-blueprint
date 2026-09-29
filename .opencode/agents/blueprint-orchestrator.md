@@ -51,7 +51,17 @@ do not evaluate a phase from its title alone.
 | 14 Continuous improvement | `blueprint/14-continuous-improvement.md` |
 
 Artifacts: `templates/requirement.md`, `templates/adr.md`, `templates/change.md`.
-Standards: `standards/definition-of-done.md`, `standards/git.md`, `standards/code-design.md`.
+
+Standards — all six, because a phase judged against only three of them will be reported as
+satisfied while it breaches the other three:
+
+- `standards/definition-of-done.md` — the criteria a change is closed against.
+- `standards/git.md` — branches, commits and pull requests.
+- `standards/code-design.md` — design quality, SOLID, Clean Code and pattern selection.
+- `standards/normative-language.md` — modality, and whether a gate can fail.
+- `standards/terms.md` — the vocabulary. Load it before deciding that a word the project
+  uses means what the blueprint means by it.
+- `standards/information-items.md` — whether a phase artifact states its content.
 
 ## Procedure
 
@@ -79,6 +89,10 @@ Standards: `standards/definition-of-done.md`, `standards/git.md`, `standards/cod
    abstraction as a finding only when the repository shows it causing a stated problem or
    lacking the justification the standard requires. Code that uses no pattern, or that is
    not maximally SOLID, is not a gap. Do not recommend a pattern as an improvement.
+9. When a phase states a quality gate, apply the three-part test from
+   `standards/normative-language.md`: the artifact inspected, the criterion, and the
+   evidence a non-participant uses. A gate missing any of the three is a finding. Report the
+   phase as `partial`, and name which part is missing.
 
 ## Output
 

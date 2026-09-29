@@ -30,9 +30,14 @@ This Code of Conduct applies in all project spaces — the repository, issues, p
 
 ## Enforcement
 
-Report abusive, harassing or otherwise unacceptable behaviour privately to the project maintainers.
+Report abusive, harassing or otherwise unacceptable behaviour privately to the project maintainers. There is no email address, deliberately: a mailbox nobody reads is worse than no mailbox, because a reporter believes they have reported and stops looking. Use one of these, both of which reach a maintainer without publishing the report:
 
-<!-- TODO(owner): replace with a monitored address that reaches a maintainer, for example conduct@jorvacode.dev. An address that is not monitored is worse than no address at all. -->
+- **Report abuse** on the organisation page, at `https://orgcontacts.github.com/JorvaCode/report-abuse`, for a violation of GitHub's rules.
+- The same *Report a vulnerability* button described in [SECURITY.md](SECURITY.md), for anything that also has a security dimension.
+
+For a complaint that fits neither, open an issue that states only that you would like to
+contact the maintainers privately, with no detail, and a maintainer will open a private
+channel with you.
 
 All complaints will be reviewed and investigated promptly and fairly. Maintainers are obliged to respect the privacy and security of the reporter of any incident.
 

@@ -49,7 +49,7 @@ The blueprint uses a small vocabulary of its own and inherits the rest from publ
 A decision is recorded as an ADR rather than in the change when **at least one** of the following holds:
 
 - **(a) It is expensive to reverse.** A public interface, a persisted data model, an external protocol, a published contract.
-- **(b) It constrains two or more lifecycle phases.** A change that a later phase would have to work around.
+- **(b) It constrains two or more lifecycle phases.** A change that leaves a later phase no route it would otherwise have taken.
 - **(c) It introduces or removes a dependency, a platform or a standard.**
 - **(d) It changes a quality attribute the system is judged on.** Performance, security, availability, cost.
 - **(e) It affects consumers outside the team.**

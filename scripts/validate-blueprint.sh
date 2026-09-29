@@ -65,7 +65,6 @@ check_file SECURITY.md
 check_file CODE_OF_CONDUCT.md
 check_file .editorconfig
 check_file .markdownlint.json
-check_file .github/CODEOWNERS
 check_file .github/PULL_REQUEST_TEMPLATE.md
 check_file .github/ISSUE_TEMPLATE/bug_report.yml
 check_file .github/ISSUE_TEMPLATE/feature_request.yml
@@ -77,6 +76,22 @@ for f in LICENSE CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md; do
     fail "empty governance file: $f"
   fi
 done
+# A governance file that exists but says "TODO(owner)" protects nothing, and the
+# previous check only tested for emptiness, so the repository could report a green
+# gate while every owner-dependent control in it was still unwritten. A
+# placeholder in a governance file is a defect, not a note.
+for f in CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md; do
+  if grep -qE 'TODO\(|FIXME|XXX' "$f"; then
+    fail "governance file still carries a placeholder: $f"
+  fi
+done
+# CODEOWNERS is deliberately not required. It was required while naming a team
+# that may not exist, and an entry matching no account is ignored by GitHub
+# without warning, so the file gave the appearance of review enforcement and none.
+# It returns as a one-file change the moment there is a second maintainer to name.
+if [ -f .github/CODEOWNERS ] && grep -qE 'TODO\(|FIXME|XXX' .github/CODEOWNERS; then
+  fail ".github/CODEOWNERS carries a placeholder owner"
+fi
 
 echo "== Installers =="
 check_file scripts/blueprint-init.ps1
@@ -227,6 +242,35 @@ for a in \
   check_file "blueprint/architecture/adr/${a}"
 done
 
+echo "== Every ADR follows templates/adr.md =="
+# The template declares the required structure, and until now nothing checked
+# that an ADR followed it. Three of the eleven were written with Spanish
+# headings, Status and Date as a metadata list rather than sections, and a
+# Consequences section with no split, so "the template's headings are required"
+# (standards/normative-language.md) was a claim with no check behind it.
+#
+# Extra sections are permitted: the template is a floor, not a ceiling. ADR-011
+# keeps a Verification section and folds its former Scope line into Context.
+for adr in blueprint/architecture/adr/adr-*.md; do
+  for section in '## Status' '## Context' '## Options considered' '## Decision' '## Consequences' '### Positive' '### Negative / trade-offs' '## Date'; do
+    if ! grep -qF "$section" "$adr"; then
+      fail "$adr is missing the template section: ${section}"
+    fi
+  done
+  if ! head -n 1 "$adr" | grep -qE '^# ADR-[0-9]{3}: .+'; then
+    fail "$adr does not start with a '# ADR-NNN: <title>' heading"
+  fi
+  status=$(awk '/^## Status/{getline; while ($0 ~ /^[[:space:]]*$/) getline; print; exit}' "$adr")
+  case "$status" in
+    Proposed|Accepted|Superseded|Rejected) ;;
+    *) fail "$adr has an invalid Status: '${status}' (expected Proposed, Accepted, Superseded or Rejected)" ;;
+  esac
+  adr_date=$(awk '/^## Date/{getline; while ($0 ~ /^[[:space:]]*$/) getline; print; exit}' "$adr")
+  if ! printf '%s' "$adr_date" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+    fail "$adr has a Date that is not YYYY-MM-DD: '${adr_date}'"
+  fi
+done
+
 echo "== Code design standard is referenced by the phases that gate on it =="
 for d in 00-principles 04-design 05-implementation 07-code-review 08-security-quality; do
   if ! grep -q 'standards/code-design.md' "blueprint/${d}.md"; then
@@ -286,14 +330,41 @@ for i in $(seq -w 1 14); do
 done
 
 echo "== Quality gates name an artifact and cannot be satisfied by adjectives =="
-# These are the exact phrasings the audit found to be unfalsifiable. They
-# are listed rather than pattern-matched, because a gate that cannot fail
-# is the failure mode, and the failure mode is specific to these words.
-if grep -rnEi \
-  'clear, testable, feasible|clear and maintainable|appropriately|as needed|good (practice|quality)|high quality|clean and maintainable' \
-  blueprint/0*.md blueprint/1*.md; then
-  fail "quality gate regressed to unfalsifiable adjectives (see ADR-009)"
-fi
+# The scope is the gate itself, not the whole document. A phase may legitimately
+# discuss feasibility in its guidance; what cannot pass is a gate that asks for
+# it. The previous version grepped whole files for a fixed phrase, which is why
+# "numbered, testable and feasible" sat in phase 01 with the gate green: the
+# phrase it looked for had the word "clear" in front of it.
+#
+# standards/normative-language.md is excluded from the prose sweep below
+# because a standard that defines the ban has to quote what it bans, and
+# quoting "clear, testable, feasible" is the definition working, not failing.
+# The words are matched individually, not as a fixed phrase. The previous
+# version searched for "clear, testable, feasible" as one string, so a gate
+# reading "numbered, testable and feasible" passed, and that is the exact
+# sentence phase 01 carried while this check reported the repository green.
+UNFALSIFIABLE='\btestable\b|\bfeasible\b|\bappropriately\b|\bas needed\b|\bgood +(practice|quality)\b|\bhigh quality\b|\bclear\b|\bclean\b|\bconvincing\b|\bplausible\b|\brobust\b|\badequate\b|\breasonable\b|\bcomplete\b|\bconsidered\b|\baddressed\b|\bwhere applicable\b|\bwhere needed\b'
+for doc in blueprint/[0-9][0-9]-*.md; do
+  gate=$(awk '/^## +Quality gate/{f=1;next} /^## /{f=0} f' "$doc")
+  if printf '%s\n' "$gate" | grep -qEi "$UNFALSIFIABLE"; then
+    fail "quality gate in $doc uses an adjective that cannot fail (see standards/normative-language.md)"
+  fi
+done
+# The modality sweep targets the directive forms, not the bare words. "Consider
+# the rollback path" is a pseudo-obligation and is banned; "the options
+# considered" is the name of a section that templates/adr.md fixes, and banning
+# it would break the template. That distinction is a known limit of this check,
+# not an oversight: a check that could tell the two apart without a hand-written
+# exception list would need to parse English.
+BANNED_MODALITY='\bprefer\b|\b(need|have|try) to\b|\bconsider(s|ed|ing)? +(the|this|these|a|an|whether|against|how)\b'
+for doc in standards/*.md; do
+  case "$doc" in
+    standards/normative-language.md) continue ;;
+  esac
+  if grep -qEi "$BANNED_MODALITY" "$doc"; then
+    fail "$doc uses a non-modality word banned by standards/normative-language.md"
+  fi
+done
 
 echo "== Information items standard is declared and reachable =="
 for f in AGENTS.md standards/definition-of-done.md; do
@@ -381,6 +452,20 @@ for s in blueprint blueprint-architecture blueprint-cicd blueprint-development b
   fi
   if grep -qE '^#+ .*(Justification test|Absence is not a finding|SOLID as a diagnostic)' ".opencode/skills/${s}/SKILL.md"; then
     fail "skill ${s} restates standards/code-design.md instead of routing to it"
+  fi
+done
+
+echo "== The adapter routes to every standard =="
+# standards/ is normative and .opencode/ is an adapter, not a source of truth. An
+# adapter that does not name a standard cannot route a reader to it, and three of
+# the six were unreachable from .opencode/ in any file. AGENTS.md is the core
+# router; this asserts the adapter has not fallen behind it.
+for s in standards/*.md; do
+  if ! grep -rq "$s" AGENTS.md; then
+    fail "AGENTS.md does not route to $s, so the standard is unreachable"
+  fi
+  if ! grep -rq "$s" .opencode/; then
+    fail ".opencode/ never references $s, so the adapter cannot route to it"
   fi
 done
 

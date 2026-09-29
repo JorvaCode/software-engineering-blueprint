@@ -16,6 +16,12 @@ All paths below are relative to the project root.
 - `templates/requirement.md`
 - `templates/change.md`
 
+## Standards
+
+- `standards/information-items.md` — what the requirement artifact shall contain.
+- `standards/normative-language.md` — how to write an acceptance criterion that can fail.
+- `standards/terms.md` — load it before using a term the phase documents do not define.
+
 ## Procedure
 
 1. Read `blueprint/02-analysis.md` first if the existing system is not yet understood:

@@ -1,10 +1,10 @@
 # ADR-009: Declarar los information items de cada fase
 
-- **Status**: Accepted
-- **Date**: 2026-09-29
-- **Scope**: `blueprint/00-principles.md` … `blueprint/14-continuous-improvement.md`
+## Status
+Accepted
 
-## Contexto
+## Context
+Ámbito: `blueprint/00-principles.md` … `blueprint/14-continuous-improvement.md`.
 
 El blueprint define catorce fases y, para la mayoría de ellas, un artefacto. Lo que no
 definía era el contenido de ese artefacto. `02-analysis.md` pedía «an analysis
@@ -20,7 +20,24 @@ maintainable?», que es una opinión esperando un sí, y `13-observability.md` p
 los fallos operacionalmente significativos pudieran detectarse, sin decir cuáles. Un
 criterio que no puede fallar no es una gate: es una afirmación con formato de criterio.
 
-## Decisión
+## Options considered
+
+**Opción A — continuar con el estilo actual.** Coste cero, y es lo que hacía el
+blueprint legible. Se descartó: la vaguedad era el defecto, no un coste aceptado.
+
+**Opción B — plantillas completas para las catorce fases.** Una plantilla por fase
+haría cada artefacto verificable por construcción. Se descartó por desproporción: la
+mayoría de los proyectos consume tres o cuatro fases al día y catorce plantillas
+obligarían a mantener catorce artefactos que casi nadie rellena, que es un coste fijo
+recuperado muy raramente. La sección de information items declara lo que debe contener
+el artefacto y remite a la plantilla solo donde la plantilla ya existe.
+
+**Opción C — information items por fase, con el estándar como reglas comunes.**
+Adoptada. La declaración vive junto a la fase que la produce, donde el lector ya está;
+las reglas transversales viven en `standards/`. La duplicación entre las dos es mínima y
+deliberada: la fase declara contenido, el estándar declara método.
+
+## Decision
 
 Cada fase `01` … `14` declara una sección `## Information items` con `### Inputs` y
 `### Outputs`. Cada output nombra lo que el artefacto contiene, no sólo cómo se llama.
@@ -39,24 +56,9 @@ proceso por propósito, resultados, actividades y tareas, delegando explícitame
 nombre, formato y contenido de los information items a 15289. Proceso y papeleria se
 especifican por separado, y por eso cambiar una no cambia automáticamente la otra.
 
-## Contexto considered
+## Consequences
 
-**Opción A — continuar con el estilo actual.** Coste cero, y es lo que hacía el
-blueprint legible. Se descartó: la vaguedad era el defecto, no un coste aceptado.
-
-**Opción B — plantillas completas para las catorce fases.** Una plantilla por fase
-haría cada artefacto verificable por construcción. Se descartó por desproporción: la
-mayoría de los proyectos consume tres o cuatro fases al día y catorce plantillas
-obligarían a mantener catorce artefactos que casi nadie rellena, que es un coste fijo
-recuperado muy raramente. La sección de information items declara lo que debe contener
-el artefacto y remite a la plantilla solo donde la plantilla ya existe.
-
-**Opción C — information items por fase, con el estándar como reglas comunes.**
-Adoptada. La declaración vive junto a la fase que la produce, donde el lector ya está;
-las reglas transversales viven en `standards/`. La duplicación entre las dos es mínima y
-deliberada: la fase declara contenido, el estándar declara método.
-
-## Consecuencias
+### Positive
 
 - Un revisor puede decidir si un artefacto de fase es suficiente leyendo la fase, sin
   preguntarle a quien lo escribió. La tercera condición de `standards/normative-language.md`
@@ -68,7 +70,7 @@ deliberada: la fase declara contenido, el estándar declara método.
 - Un artefacto de fase que omite exclusiones de alcance ahora es detectable: la segunda
   condición de suficiencia exige declarar lo que se dejó fuera.
 
-### Lo que este ADR no hace
+### Negative / trade-offs
 
 - **No introduce trazabilidad entre fases.** Un cambio en un requisito no tiene un vínculo
   forzado con el diseño y los tests que lo implementan. Eso es el principio 7 de
@@ -83,3 +85,6 @@ deliberada: la fase declara contenido, el estándar declara método.
   algo para nadie es una gate que se cumple siempre.
 - **No aplica a la fase `00`.** `00-principles.md` es una declaración de principios, no
   un proceso, y no produce information items. Es la misma distinción que hace 12207.
+
+## Date
+2026-09-29

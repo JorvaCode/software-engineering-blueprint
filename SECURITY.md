@@ -17,9 +17,12 @@ A compromise of a workflow here propagates to every project that adopts the blue
 1. Go to **Security** → **Advisories** → **Report a vulnerability** on this repository, or
 2. Use the *Report a vulnerability* button on the **Security** tab.
 
-<!-- TODO(owner): if private vulnerability reporting is not enabled for this repository, replace this section with a monitored contact address (for example security@jorvacode.dev) and enable the feature in Settings → Code security. -->
-
-If private reporting is unavailable to you, open an issue that states only that a security report should be routed privately, with no technical detail.
+This is the only reporting channel, and there is deliberately no email address: a mailbox
+nobody reads is worse than no mailbox, because a reporter believes they have reported and
+stop looking. If the *Report a vulnerability* button is absent, the reporting feature is
+not enabled for this repository, which is a setup gap on the maintainer side rather than a
+reason to publish the report. Open an issue that states only that a security report should
+be routed privately, with no technical detail, so the omission becomes visible.
 
 Please include the affected file, the impact you believe it has, and the reproduction steps if you have them.
 
