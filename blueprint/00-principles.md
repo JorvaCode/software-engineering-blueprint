@@ -7,7 +7,7 @@ Every change starts with an explicit problem, objective and acceptance criteria.
 Important architectural decisions are documented and traceable.
 
 ## 3. Small, verifiable changes
-Prefer small changes that can be built, tested and reviewed independently.
+Changes should be small enough to be built, tested and reviewed independently.
 
 ## 4. Quality is continuous
 Quality checks are performed throughout the lifecycle, not only before release.
@@ -25,7 +25,7 @@ A requirement should be traceable through design, implementation, tests and deli
 Production and development feedback feed continuous improvement.
 
 ## 9. Tool independence
-The process must not depend on a particular IDE or coding assistant.
+The process shall not depend on a particular IDE or coding assistant.
 
 ## 10. Design quality is justified, not assumed
 Code and design decisions are checked against `standards/code-design.md`. A design

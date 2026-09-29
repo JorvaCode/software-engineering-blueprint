@@ -30,6 +30,9 @@ Read phase documents on demand. Do not preload the lifecycle.
 - Done criteria: `standards/definition-of-done.md`
 - Commits and branches: `standards/git.md`
 - Design quality, SOLID, Clean Code and pattern selection: `standards/code-design.md`
+- Vocabulary: `standards/terms.md`. Load it before interpreting a term the phase
+  documents do not define.
+- Modality and how to write a checkable gate: `standards/normative-language.md`
 
 All paths are relative to this repository root.
 
@@ -45,9 +48,15 @@ All paths are relative to this repository root.
 8. A pattern is a finding only when the design justifies it. Never add an abstraction,
    base class or interface that has no stated problem behind it.
 9. A significant architectural decision needs an ADR in `blueprint/architecture/adr/`,
-   following the format of the existing ones.
+   following the format of the existing ones. "Significant" is defined in
+   `standards/terms.md`; it is not a matter of taste.
 10. Close every change against `standards/definition-of-done.md` and report what was
-   skipped and why.
+    skipped and why.
+11. Write normative text with deliberate modality. `shall` is an obligation, `should` is a
+    recommendation that needs a recorded reason to deviate, `may` is a real option, and
+    `prefer` is not modality at all. See `standards/normative-language.md`.
+12. Do not write a quality gate that cannot fail. Name the artifact, the criterion and the
+    evidence. "Clear and maintainable?" and "can be detected?" are not gates.
 
 ## Adapter rules
 

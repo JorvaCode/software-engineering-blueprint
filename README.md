@@ -33,6 +33,12 @@ A tool-agnostic, reusable blueprint for professional software delivery, from req
 
 The blueprint defines **what must happen, what artifacts are expected, and what quality gates apply**. Individual projects choose their language, IDE, framework, cloud, registry and deployment platform.
 
+## Normative language
+
+Normative text states its strength deliberately. `shall` is an obligation, `should` is a recommendation that needs a recorded reason to deviate, `may` is a genuine option, and `prefer` is not modality at all. The vocabulary is defined in [standards/terms.md](standards/terms.md) and the rules in [standards/normative-language.md](standards/normative-language.md), which also derive from RFC 2119 and RFC 8174.
+
+A quality gate is a check, not a sentiment. Every gate names the artifact inspected, the criterion it must meet, and the evidence a third party uses to reach the same verdict. See [ADR-008](blueprint/architecture/adr/adr-008-terminologia-y-modalidad-normativa.md).
+
 ## Design quality
 
 Design quality is checked, not assumed. `standards/code-design.md` treats SOLID and Clean Code as diagnostics that only produce a finding when they name a concrete problem, and admits a design pattern only when the design states the problem it solves, the evidence, the cost of the simpler alternative and the scope of application. Code that uses no pattern is never a defect. See [ADR-006](blueprint/architecture/adr/adr-006-calidad-diseno-codigo-solid-clean-code-patrones.md).
@@ -41,7 +47,7 @@ Design quality is checked, not assumed. `standards/code-design.md` treats SOLID 
 
 - `blueprint/` — normative lifecycle definition.
 - `templates/` — reusable project artifacts.
-- `standards/` — engineering standards.
+- `standards/` — engineering standards, including the vocabulary and the normative language.
 - `AGENTS.md` — working rules for AI assistants in this repository.
 - `CONTRIBUTING.md` — working rules for human contributors, and the order of authority.
 - `SECURITY.md` — how to report a vulnerability privately.

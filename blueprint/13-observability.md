@@ -1,6 +1,6 @@
 # 13 — Observability
 
-A deployed system must provide enough information to understand its behaviour.
+A deployed system shall provide enough information to understand its behaviour.
 
 ## Signals
 - Logs

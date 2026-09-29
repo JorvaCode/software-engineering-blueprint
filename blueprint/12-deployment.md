@@ -1,6 +1,6 @@
 # 12 — Deployment
 
-Deployment must be repeatable and observable.
+Deployment shall be repeatable and observable.
 
 ## Consider
 - Configuration

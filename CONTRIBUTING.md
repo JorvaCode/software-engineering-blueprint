@@ -42,7 +42,7 @@ This repository lints itself with `markdownlint-cli` (pinned version in `.github
 - **Headings and lists are not surrounded by blank lines.** The house style is compact. Do not reformat existing documents to satisfy a different style.
 - Every file ends with exactly one newline, and every heading starts at level 1.
 
-Use `shall` / `should` / `may` deliberately, following the rules this repository will formalise in `standards/normative-language.md`. A quality gate that cannot be falsified is not a gate.
+Use `shall` / `should` / `may` deliberately, following [standards/normative-language.md](standards/normative-language.md). Use the vocabulary in [standards/terms.md](standards/terms.md), and add a term there when you rely on one that is not defined. A quality gate that cannot be falsified is not a gate.
 
 ## Commit messages and branches
 

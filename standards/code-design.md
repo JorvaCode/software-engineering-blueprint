@@ -30,7 +30,7 @@ answer produces a concrete problem you can state in one sentence.
 | --- | --- | --- |
 | Single responsibility | Does this unit change for one reason? | A second, unrelated reason for change exists, and the coupling causes real cost. |
 | Open/closed | Does adding behaviour modify existing behaviour? | The change forces edits in code that was correct before, or `if`/type branches accumulate. |
-| Liskov substitution | Can a subtype replace its base without surprises? | A subtype must honour behaviour it cannot support, or callers need type checks to use it. |
+| Liskov substitution | Can a subtype replace its base without surprises? | A subtype shall honour behaviour it cannot support, or callers need type checks to use it. |
 | Interface segregation | Does every consumer need the whole interface? | Callers depend on operations they never call, and changes ripple to all of them. |
 | Dependency inversion | Do high-level policies depend on volatile details? | A business rule cannot be exercised or replaced without the concrete infrastructure. |
 
@@ -42,7 +42,7 @@ Rules for using the table:
   under "Avoid unrelated changes" in `blueprint/05-implementation.md`.
 - Existing behaviour is not evidence of a defect. A design that works and is not maximally
   SOLID is not a finding.
-- Prefer the smallest change that removes the stated problem. Splitting a module is
+- The smallest change that removes the stated problem should be preferred. Splitting a module is
   justified when it is the fix, not as a preventive abstraction.
 
 ## 3. Clean Code as change cost

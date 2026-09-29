@@ -34,11 +34,11 @@ Provide a tool-agnostic, language-agnostic and reusable engineering lifecycle th
 - FR-08: The blueprint shall declare its own version and release status (v1.0.0, initial reusable release).
 
 ## Non-functional requirements
-- NFR-01: Tool-agnostic: the lifecycle must not require a specific IDE.
-- NFR-02: Language-agnostic at the process level; it must not depend on any programming language.
+- NFR-01: Tool-agnostic: the lifecycle shall not require a specific IDE.
+- NFR-02: Language-agnostic at the process level; it shall not depend on any programming language.
 - NFR-03: Tool-agnostic where possible; CI/CD examples may reference GitHub Actions, but only as examples or adapters.
 - NFR-04: Reusable across projects and teams, either by copying the relevant directories or by referencing a central blueprint repository.
-- NFR-05: Compatible with AI-assisted development; OpenCode must remain an optional adapter, not a dependency.
+- NFR-05: Compatible with AI-assisted development; OpenCode shall remain an optional adapter, not a dependency.
 - NFR-06: Maintainable as documentation: plain Markdown, versioned, with a clear repository structure.
 - NFR-07: Traceable: changes should reference the requirement and produce the corresponding phase artifacts.
 

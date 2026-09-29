@@ -4,7 +4,7 @@
 Use short-lived branches for changes.
 
 ## Commits
-Prefer small, meaningful commits that explain the change.
+Commits should be small and meaningful, and explain the change.
 
 ## Pull requests
 Every non-trivial change should be reviewable through a pull request where the team workflow supports it.

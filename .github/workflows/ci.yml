@@ -105,7 +105,7 @@ jobs:
           done
 
           echo "== Standards =="
-          for s in definition-of-done.md git.md code-design.md; do
+          for s in definition-of-done.md git.md code-design.md normative-language.md terms.md; do
             check_file "standards/${s}"
           done
 
@@ -117,7 +117,8 @@ jobs:
             adr-004-modelo-distribucion-reutilizacion.md \
             adr-005-skill-agente-adaptor-opencode.md \
             adr-006-calidad-diseno-codigo-solid-clean-code-patrones.md \
-            adr-007-licencia-y-gobernanza-del-repositorio.md; do
+            adr-007-licencia-y-gobernanza-del-repositorio.md \
+            adr-008-terminologia-y-modalidad-normativa.md; do
             check_file "blueprint/architecture/adr/${a}"
           done
 
@@ -134,6 +135,45 @@ jobs:
           echo "== Code design standard keeps patterns optional =="
           if ! grep -q 'Absence is not a finding' standards/code-design.md; then
             fail "standards/code-design.md must state that the absence of a pattern is not a finding"
+          fi
+
+          echo "== Normative language is declared and reachable =="
+          # The convention only governs if every agent and contributor is pointed at it.
+          for f in AGENTS.md CONTRIBUTING.md standards/definition-of-done.md; do
+            if ! grep -q 'standards/normative-language.md' "$f"; then
+              fail "does not reference standards/normative-language.md: $f"
+            fi
+          done
+          # A gate that cannot fail is not a gate, so the rule must state the test.
+          if ! grep -q 'Artifact' standards/normative-language.md; then
+            fail "standards/normative-language.md must state the falsifiability test for a gate"
+          fi
+          # 'Important' is replaced by a defined threshold, so the threshold must be referenced.
+          if ! grep -q 'standards/terms.md' blueprint/03-architecture.md; then
+            fail "blueprint/03-architecture.md does not reference standards/terms.md"
+          fi
+          if ! grep -q 'Significant decision' standards/terms.md; then
+            fail "standards/terms.md must define the significant decision criteria"
+          fi
+
+          echo "== Modality is used consistently in normative text =="
+          # MUST and SHALL are exact synonyms, so this repository uses shall only.
+          # Two exemptions, both deliberate:
+          #   - normative-language.md and terms.md are where the convention is defined,
+          #     so they are the one place the words being discussed may be quoted.
+          #   - 'what must happen' is a nominal phrase, not modality.
+          # The globs cover the phase documents, the requirements register, the
+          # standards and the templates. ADRs are excluded by the globs themselves:
+          # a historical ADR quoting the previous wording is a record, not a rule.
+          if grep -rnE '\bmust\b' blueprint/0*.md blueprint/1*.md standards/ templates/ 2>/dev/null \
+            | grep -v 'what must happen' \
+            | grep -v 'standards/normative-language.md' \
+            | grep -v 'standards/terms.md'; then
+            fail "normative text uses 'must' where it should use 'shall' (see ADR-008)"
+          fi
+          # 'prefer' is not modality, so it cannot carry an obligation.
+          if grep -rnE '\bPrefer\b' blueprint/0*.md blueprint/1*.md standards/ templates/ 2>/dev/null; then
+            fail "normative text uses 'Prefer' as if it were modality (see ADR-008)"
           fi
 
           echo "== OpenCode adapter =="

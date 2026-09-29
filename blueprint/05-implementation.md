@@ -5,7 +5,7 @@ Implement the approved design in small, reviewable increments.
 ## Rules
 - Follow project coding standards.
 - Preserve architectural boundaries.
-- Prefer simple solutions.
+- Simple solutions should be preferred.
 - Apply `standards/code-design.md`: SOLID and Clean Code as diagnostics, patterns only
   when justified in the design.
 - Avoid unrelated changes.

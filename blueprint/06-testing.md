@@ -12,7 +12,7 @@ Testing is layered according to risk.
 
 ## Principles
 - Tests should verify behaviour.
-- Critical acceptance criteria must have automated verification where practical.
+- Critical acceptance criteria shall have automated verification where practical.
 - Tests should be deterministic and maintainable.
 
 ## Quality gate

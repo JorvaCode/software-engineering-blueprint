@@ -38,7 +38,7 @@ Closes #
 
 ## Normative text
 
-- [ ] Any change to `blueprint/` or `standards/` states the modality deliberately: `shall` for an obligation, `should` for a recommendation with a stated reason to deviate, `may` for an option. See `standards/normative-language.md`.
+- [ ] Any change to `blueprint/` or `standards/` states the modality deliberately: `shall` for an obligation, `should` for a recommendation with a stated reason to deviate, `may` for an option. See [standards/normative-language.md](../standards/normative-language.md) and [standards/terms.md](../standards/terms.md).
 
 ## Review notes
 
