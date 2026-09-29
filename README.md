@@ -47,6 +47,14 @@ Each phase in `blueprint/01` … `blueprint/14` declares an `## Information item
 
 Phase `00` is excluded from this requirement. It states principles rather than running a process, which is the same distinction ISO/IEC/IEEE 12207 makes.
 
+## Architecture description
+
+The architecture phase names the **stakeholders** and the **concerns** they hold before it describes any structure, because a structure is designed to satisfy concerns and a concern with no stakeholder has nobody to resolve it for. Where a single description does not serve every concern, it is split into **views**, each taken from one **viewpoint**, with the **correspondence** between them and the **rationale** declared.
+
+Every concern that carries a threshold in the requirements phase gets a **quality attribute scenario** with six parts — source, stimulus, environment, artifact, response, response measure. The response measure is what makes the scenario falsifiable: without it the scenario restates a concern that the requirements phase already gave a number to, and that number never reaches the structural decision.
+
+The vocabulary is defined in [standards/terms.md](standards/terms.md) from **ISO/IEC/IEEE 42010:2022**, in a narrow scope that is stated rather than implied. A single view is valid and splitting is not a goal; the same rule as principle 10 applies. Full ATAM is deliberately out of scope — it presupposes a workshop for changes far larger than most of the ones this blueprint is used for. See [ADR-010](blueprint/architecture/adr/adr-010-vistas-y-escenarios-de-atributo-de-calidad.md).
+
 ## Design quality
 
 Design quality is checked, not assumed. `standards/code-design.md` treats SOLID and Clean Code as diagnostics that only produce a finding when they name a concrete problem, and admits a design pattern only when the design states the problem it solves, the evidence, the cost of the simpler alternative and the scope of application. Code that uses no pattern is never a defect. See [ADR-006](blueprint/architecture/adr/adr-006-calidad-diseno-codigo-solid-clean-code-patrones.md).

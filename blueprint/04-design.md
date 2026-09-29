@@ -21,7 +21,7 @@ Translate architecture into an implementation-ready design.
 ### Outputs
 - **Design** — interfaces and contracts, data models, error handling, validation, transactional boundaries, and configuration and operational needs. Each element states the requirement it satisfies.
 - **Pattern justification** — for each pattern applied, the four items required by `standards/code-design.md`: the problem it solves, the evidence, the cost of the simpler alternative, and the scope. Absent when no pattern is applied, which is not a defect.
-- **Test strategy** — which testing levels apply to this change, and why the risk justifies those levels. A strategy that applies every level to every change is not a strategy.
+- **Test strategy** — which testing levels apply to this change, and why the risk justifies those levels. A strategy that applies every level to every change is not a strategy. Where `03-architecture.md` produced quality attribute scenarios, the levels are derived from their response measures rather than chosen independently.
 
 ## Pattern selection
 A pattern is selected only when `standards/code-design.md` is satisfied: the design states

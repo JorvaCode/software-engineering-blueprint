@@ -119,7 +119,8 @@ jobs:
             adr-006-calidad-diseno-codigo-solid-clean-code-patrones.md \
             adr-007-licencia-y-gobernanza-del-repositorio.md \
             adr-008-terminologia-y-modalidad-normativa.md \
-            adr-009-information-items-por-fase.md; do
+            adr-009-information-items-por-fase.md \
+            adr-010-vistas-y-escenarios-de-atributo-de-calidad.md; do
             check_file "blueprint/architecture/adr/${a}"
           done
 
@@ -206,6 +207,33 @@ jobs:
           # that carries the limitation, not just in the ADR.
           if ! grep -q 'not yet make the phases checkable against each other' standards/information-items.md; then
             fail "standards/information-items.md must state the traceability limitation it does not solve"
+          fi
+
+          echo "== Quality attribute scenarios are wired into the phases that consume them =="
+          # The six fields are what make a scenario falsifiable. A scenario that
+          # restates a concern is not one, so every field is required.
+          for field in Source Stimulus Environment Artifact Response 'Response measure'; do
+            if ! grep -qE "^\| ${field} \|" blueprint/03-architecture.md; then
+              fail "blueprint/03-architecture.md is missing the QAS field: ${field}"
+            fi
+          done
+          # Declaring scenarios that nothing executes would make the mechanism
+          # decorative, so the consuming phases have to reference them.
+          if ! grep -q 'quality attribute scenarios' blueprint/04-design.md; then
+            fail "blueprint/04-design.md does not derive its test strategy from the scenarios"
+          fi
+          if ! grep -q 'Scenario coverage' blueprint/06-testing.md; then
+            fail "blueprint/06-testing.md does not record which response measures are verified"
+          fi
+          # The vocabulary only carries weight if the standard it comes from is
+          # cited where the terms are defined.
+          for t in Stakeholder Concern Viewpoint View Model Correspondence Rationale; do
+            if ! grep -qE "^\| \*\*${t}\*\* \|" standards/terms.md; then
+              fail "standards/terms.md does not define: ${t}"
+            fi
+          done
+          if ! grep -q 'ISO/IEC/IEEE 42010:2022' standards/terms.md; then
+            fail "standards/terms.md does not cite ISO/IEC/IEEE 42010:2022 for the architecture vocabulary"
           fi
 
           echo "== Modality is used consistently in normative text =="

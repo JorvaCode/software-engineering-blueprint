@@ -27,6 +27,23 @@ The blueprint uses a small vocabulary of its own and inherits the rest from publ
 | **Adopting project** | A repository that installed the blueprint with one of the installers. Also called a consumer. | local |
 | **Source of truth** | The single document that a given rule is read from. For lifecycle rules it is always a document in `blueprint/`, never a skill, an agent or a README. | local |
 
+## Architecture description vocabulary
+
+`blueprint/03-architecture.md` describes structure, and it borrows this vocabulary from **ISO/IEC/IEEE 42010:2022** (*Software, systems and enterprise — Architecture description*). These terms are used in a narrow sense on purpose. 42010 describes them in much greater generality, and a blueprint that adopts the full generality would produce an architecture framework instead of a gate.
+
+| Term | Definition | Source |
+| --- | --- | --- |
+| **Stakeholder** | An individual, team or organization with an interest in, or affected by, the system. A stakeholder is identified by name or role, never by "the business". | ISO/IEC/IEEE 42010:2022 |
+| **Concern** | A quality attribute that a stakeholder wants the system to exhibit, such as availability, latency, security or maintainability. A concern belongs to a stakeholder; an unowned concern has no one to resolve it for. | ISO/IEC/IEEE 42010:2022 |
+| **Viewpoint** | The concerns of one stakeholder, or of a set of stakeholders treated as having compatible concerns. | ISO/IEC/IEEE 42010:2022 |
+| **View** | A representation of a system, or of part of it, from the standpoint of one viewpoint. A view is partial by construction: it exists to serve the concerns of its viewpoint, so "the complete view" is not a goal. | ISO/IEC/IEEE 42010:2022 |
+| **View type** | A view that is concerned with a system aspect other than its behavior, used when behavior is decomposed over several views. | ISO/IEC/IEEE 42010:2022 |
+| **Model** | The formalized description of the subject system as it appears in a view, comprising the views' content together with their correspondence and rationale. | ISO/IEC/IEEE 42010:2022 |
+| **Correspondence** | The relation between two elements of a model: how the content of one view maps onto another. A set of views with no stated correspondence cannot be checked for consistency. | ISO/IEC/IEEE 42010:2022 |
+| **Rationale** | The reason a correspondence holds, or the reason a modeling decision was made. Rationale is retained alongside the model, because a correspondence without a reason is an assertion. | ISO/IEC/IEEE 42010:2022 |
+| **Quality attribute scenario** | A six-part description of a quality concern: source, stimulus, environment, artifact, response and response measure. Named "scenario" rather than "use case", because a use case describes what the system does while this describes how it is judged. | ISO/IEC/IEEE 42010:2022 |
+| **Sensitivity** | How much a quality attribute response changes when a condition of the environment varies. Recorded when it is not obvious, because a design that is fast at the load nobody runs is not a fast design. | ISO/IEC/IEEE 42010:2022 |
+
 ## Significant decision
 
 A decision is recorded as an ADR rather than in the change when **at least one** of the following holds:
