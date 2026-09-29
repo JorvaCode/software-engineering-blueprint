@@ -72,6 +72,22 @@ echo "  --- known limitation, pinned on purpose ---"
 check "KNOWN: a stray file inside an allowlisted content dir DOES ship" \
   "[ -e '$DEST/blueprint/LEFTOVER-FROM-LOCAL-WORK.md' ]"
 
+echo "  --- the manifest records what was applied, not the allowlist ---"
+# A destination that already has one of the allowlisted entries. That entry is
+# skipped, so it was NOT applied, and a manifest that lists it anyway tells the
+# consumer something false about their own repository. See ADR-011.
+DEST_SKIP="$WORK/bash-skip-target"
+mkdir -p "$DEST_SKIP/templates"
+out3=$(bash scripts/blueprint-init.sh "$DEST_SKIP" 2>&1)
+check "pre-existing entry is skipped" "echo \"\$out3\" | grep -q 'already exists'"
+check "manifest written for a partial install" "[ -f '$DEST_SKIP/.blueprint-install.json' ]"
+check "manifest does NOT record the skipped entry" "! grep -q '\"templates\"' '$DEST_SKIP/.blueprint-install.json'"
+check "manifest DOES record an entry that was applied" "grep -q '\"blueprint\"' '$DEST_SKIP/.blueprint-install.json'"
+check "partial manifest is valid JSON" \
+  "python3 -c \"import json;json.load(open('$DEST_SKIP/.blueprint-install.json'))\" 2>/dev/null || node -e \"JSON.parse(require('fs').readFileSync('$DEST_SKIP/.blueprint-install.json','utf8'))\""
+check "full install records all 5 entries" \
+  "[ \$(grep -c '^    \"' '$DEST/.blueprint-install.json') -eq 5 ]"
+
 echo "  --- installed content is usable ---"
 check "all 15 phase docs copied" "[ \$(ls -1 '$DEST/blueprint'/[0-9][0-9]-*.md 2>/dev/null | wc -l) -eq 15 ]"
 check "5 skills copied"          "[ \$(ls -1 '$DEST/.opencode/skills' | wc -l) -eq 5 ]"

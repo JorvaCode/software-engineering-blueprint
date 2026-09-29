@@ -1,4 +1,4 @@
-# Software Engineering Blueprint v1.0.0
+# Software Engineering Blueprint
 
 A tool-agnostic, reusable blueprint for professional software delivery, from requirements specification through Continuous Integration (CI), Continuous Delivery (CD), deployment and observability. It defines the full engineering lifecycle — the phases, the artifacts each phase must produce, and the quality gates that apply — while leaving the concrete language, framework, IDE, cloud, registry and deployment platform to each adopting project.
 
@@ -107,7 +107,7 @@ The installers are covered by their own suites, `scripts/test-installers.sh` and
 
 The installed blueprint version is declared in the [`VERSION`](VERSION) file at the root. It carries the version this working tree produces, including a `-dev` suffix while the [CHANGELOG.md](CHANGELOG.md) has work under `[Unreleased]`.
 
-Each installer writes `.blueprint-install.json` into the destination, recording the version that was installed, when, by which installer, and which entries were applied. A project can therefore answer "which blueprint is this and has it been modified since" without searching. The installer never overwrites an existing manifest, because a hand-edited one may be more accurate than the one it would write.
+Each installer writes `.blueprint-install.json` into the destination, recording the version that was installed, when, by which installer, and which entries were actually applied — an entry skipped because it already existed is not recorded, because it was not applied. A project can therefore answer "which blueprint is this" without searching. It cannot answer "has it been modified since" from the manifest: there is no content hash, by design, so that a consumer's local edits do not look like corruption. The installer never overwrites an existing manifest, because a hand-edited one may be more accurate than the one it would write.
 
 There is no content hash in the manifest. `sha256sum` is not POSIX — macOS calls it `shasum` — and the installers promise not to need anything external. The version is the identifier, and it is the one the project controls. See [ADR-011](blueprint/architecture/adr/adr-011-distribucion-versionada-y-manifiesto.md).
 

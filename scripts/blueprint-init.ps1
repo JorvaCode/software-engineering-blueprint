@@ -146,7 +146,10 @@ $manifestPath = Join-Path $dest '.blueprint-install.json'
 if (Test-Path -LiteralPath $manifestPath) {
     Write-Warn "'.blueprint-install.json' already exists. Leaving it untouched."
 } else {
-    $entries = ($allowlist | ForEach-Object { '        "{0}"' -f $_ }) -join ",`n"
+    # The entries recorded are the ones this run actually applied, not the
+    # allowlist. An entry skipped as already-present was not applied, and a
+    # manifest that claims otherwise misreports the destination. See ADR-011.
+    $entries = ($installed | ForEach-Object { '        "{0}"' -f $_ }) -join ",`n"
     $manifest = @"
 {
   "blueprint": "software-engineering-blueprint",

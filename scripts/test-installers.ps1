@@ -74,6 +74,28 @@ try {
     Check "no scripts/ shipped"               (-not (Test-Path -LiteralPath "$dest\scripts"))
     Check "no README.md shipped"              (-not (Test-Path -LiteralPath "$dest\README.md"))
 
+    Write-Host "  --- the manifest records what was applied, not the allowlist ---"
+    # A destination that already has one of the allowlisted entries. That entry is
+    # skipped, so it was NOT applied, and a manifest that lists it anyway tells the
+    # consumer something false about their own repository. See ADR-011.
+    $destSkip = Join-Path $work 'ps-skip-target'
+    New-Item -ItemType Directory -Path "$destSkip\templates" -Force | Out-Null
+    $out3 = & "$repo\scripts\blueprint-init.ps1" $destSkip 2>&1 | Out-String
+    Check "pre-existing entry is skipped" ($out3 -match 'already exists')
+    $skipManifest = "$destSkip\.blueprint-install.json"
+    Check "manifest written for a partial install" (Test-Path -LiteralPath $skipManifest)
+    if (Test-Path -LiteralPath $skipManifest) {
+        $skipParsed = $null
+        $skipValid  = $true
+        try { $skipParsed = ([System.IO.File]::ReadAllText($skipManifest)) | ConvertFrom-Json } catch { $skipValid = $false }
+        Check "partial manifest is valid JSON" $skipValid
+        if ($skipValid) {
+            Check "manifest does NOT record the skipped entry" ($skipParsed.entries -notcontains 'templates')
+            Check "manifest DOES record an entry that was applied" ($skipParsed.entries -contains 'blueprint')
+            Check "partial manifest records 4 entries" ($skipParsed.entries.Count -eq 4)
+        }
+    }
+
     Write-Host "  --- installed content matches the bash installer's result ---"
     $phases = @(Get-ChildItem -Path "$dest\blueprint" -Filter '??-*.md')
     Check "all 15 phase docs copied" ($phases.Count -eq 15)

@@ -38,6 +38,12 @@ installed=0
 skipped=0
 failed=0
 
+# The entries actually applied, which is not the same list as the allowlist. An
+# entry that was skipped because it already existed, or because it is absent from
+# the source, was NOT applied, and recording it as if it had been tells the
+# consumer something false about their own repository. See ADR-011.
+installed_entries=()
+
 echo "[blueprint-init] Installing Software Engineering Blueprint into: $DEST"
 echo "[blueprint-init] Source: $BLUEPRINT_ROOT"
 
@@ -105,6 +111,7 @@ install_entry() {
 
   echo "[blueprint-init] installed  $name/"
   installed=$((installed + 1))
+  installed_entries+=("$name")
 }
 
 for entry in $ALLOWLIST; do
@@ -123,6 +130,14 @@ else
 fi
 
 if [ ! -e "$DEST/.blueprint-install.json" ]; then
+  # The entries recorded here are the ones this run actually applied. The
+  # allowlist is not, because an entry skipped as already-present was not
+  # applied, and a manifest that claims otherwise misreports the destination.
+  if [ "${#installed_entries[@]}" -gt 0 ]; then
+    entries_json=$(printf '    "%s",\n' "${installed_entries[@]}" | sed '$ s/,$//')
+  else
+    entries_json=""
+  fi
   cat > "$DEST/.blueprint-install.json" <<EOF
 {
   "blueprint": "software-engineering-blueprint",
@@ -130,7 +145,7 @@ if [ ! -e "$DEST/.blueprint-install.json" ]; then
   "installedAt": "$(date -u '+%Y-%m-%dT%H:%M:%SZ')",
   "installer": "scripts/blueprint-init.sh",
   "entries": [
-$(printf '    "%s",\n' $ALLOWLIST | sed '$ s/,$//')
+$entries_json
   ]
 }
 EOF

@@ -5,10 +5,14 @@
 #
 #   bash scripts/validate-blueprint.sh
 #
-# It is called by .github/workflows/ci.yml and by
-# .github/workflows/reusable-blueprint-validation.yml, so the three can never
-# disagree. A validation that exists in two places is a validation that will
-# eventually exist in two versions. See ADR-011.
+# It is called by .github/workflows/ci.yml, and by nothing else.
+#
+# .github/workflows/reusable-blueprint-validation.yml is a second implementation
+# and deliberately so: it validates a *consuming* repository, scripts/ is never
+# installed into one, and most of the checks below test facts that exist only in
+# this repository (ADRs, governance, VERSION, this repository's own prose links).
+# The section "Reusable workflow stays self-contained" below enforces that the two
+# never collide. See ADR-011.
 #
 # Requires only POSIX shell utilities: no Node, no Python, no network.
 
