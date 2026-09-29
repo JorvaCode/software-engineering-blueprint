@@ -15,5 +15,17 @@ Testing is layered according to risk.
 - Critical acceptance criteria shall have automated verification where practical.
 - Tests should be deterministic and maintainable.
 
+## Information items
+### Inputs
+- **Test strategy** — the levels the risk justifies, from the design.
+- **Acceptance criteria** — from `01-requirements.md`, with their verification methods.
+- **Implementation** — the change under test.
+
+### Outputs
+- **Test suite** — tests at the levels the strategy justifies, each mapped to the acceptance criterion or behaviour it verifies.
+- **Test run result** — the outcome of the suite, with the environment, the commit and the command that produced it. A green result without those three is not evidence.
+- **Criterion coverage** — which acceptance criteria have automated verification, which do not, and why. Criteria without automated verification are a named exception, not a silent gap.
+- **Defect record** — for each failure not yet fixed, the criterion affected, the severity, and the owner.
+
 ## Quality gate
-Required automated tests pass and known critical risks are covered.
+The test run result for the current commit is recorded and every required check passed. Every acceptance criterion classified as critical in `01-requirements.md` has automated verification, or appears in the criterion coverage output with a stated reason. A reviewer who did not run the tests reaches the same verdict from the run result and the coverage output.

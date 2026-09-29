@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ### Added
 
+- **Information items for all fourteen process phases** — every phase in `blueprint/01` … `blueprint/14` now carries an `## Information items` section stating its `### Inputs` and `### Outputs`, with each output naming the artifact *and* the content it shall hold. The fourteen quality gates were rewritten against the three-part test in `standards/normative-language.md` so that each one names its artifact, its criterion and its evidence. Phase `00` is excluded: it states principles rather than running a process, the same distinction ISO/IEC/IEEE 12207 makes.
+- **`standards/information-items.md`** — the cross-cutting rules: what makes a declared content list sufficient, when an item is retained, how it is versioned, and the known limitation that this standard does not create cross-phase traceability. Derives from **ISO/IEC/IEEE 15289:2019**, and records the 12207 division of labour that leaves information-item content to 15289.
+- **ADR-009** — records the information items decision, and why fourteen per-phase templates were rejected as disproportionate, why the declaration lives in the phase while the method lives in the standard, and explicitly what the ADR does not do: no new artifacts, no new numbers, and no traceability mechanism.
+
 - **`standards/normative-language.md`** — declares the modality vocabulary (`shall`, `should`, `may`, and why `prefer` is not one), the normative and non-normative status of every location in the repository, and a three-part test for a quality gate that can be falsified: it names the artifact, the criterion, and the evidence. Derives from RFC 2119 and RFC 8174, and declares the deliberate lowercase deviation from RFC 2119's all-caps rule rather than leaving it implicit.
 - **`standards/terms.md`** — glossary of the load-bearing terms, each marked as inherited from a published standard or defined locally. Includes the **significant decision** criteria, which give the word "important" in the architecture phase a threshold with five objective tests.
 - **ADR-008** — records the vocabulary decision, why RFC 2119 §4's caution against imposing a method does not transfer to a process blueprint, and why the option of aligning every phase with ISO/IEC/IEEE 15289 is split into its own ADR.
@@ -20,12 +24,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ### Changed
 
+- **Unfalsifiable quality gates** — the fourteen gates no longer ask whether something is "clear, testable, feasible", "clear and maintainable", or "operationally significant". Each now names what a reviewer inspects: the numbered requirement and its verification method, the test run result and criterion coverage, the pipeline run where a skipped *required* check fails the run, the artifact identity a consumer can verify, the rehearsed rollback, and the alert-to-runbook mapping.
+- **Phases that had no gate** — `12-deployment` and `14-continuous-improvement` gained one. `13-observability` keeps its scope and still introduces no SLI or SLO.
+- **`blueprint/07-code-review.md`** — the checklist item "Clear and maintainable?" is replaced by a question the reviewer can actually answer from the code: does each new name assert a decision or a behaviour a third party can check?
+- **Definition of Done** — gains a check that any information item introduced or changed states its content, per `standards/information-items.md`.
 - **`blueprint/03-architecture.md`** — the ADR requirement and the quality gate no longer contradict each other. A significant decision, as defined in `standards/terms.md`, shall be recorded; recording one that is not significant is permitted and is not a defect. The gate now names the evidence a non-participant reviewer uses.
 - **Definition of Done** — gains a verification method per acceptance criterion, a check that new vocabulary is added to `standards/terms.md`, a modality check, and a falsifiability check for any gate introduced or changed.
 - **`AGENTS.md`** — loads the vocabulary and the normative language on demand, and adds two working rules: write normative text with deliberate modality, and never write a gate that cannot fail.
 - **OpenCode skills reduced to routers** — `blueprint` and the four phase skills no longer duplicate the normative lifecycle. They now map each phase to its document in `blueprint/` and declare all paths as relative to the project root, so the adapter cannot silently drift from the core.
 - **README** — documents the skill/agent split, the agent location, why the adapter ships no primary agent, the normative language, the governance files, and the licence.
-- **CI** — the structure check now asserts the governance files and that `LICENSE` carries the CC BY 4.0 legal code, and ADR-007 and ADR-008 are required records.
+- **CI** — the structure check now asserts the governance files and that `LICENSE` carries the CC BY 4.0 legal code, and ADR-007, ADR-008 and ADR-009 are required records.
+- **CI gates for information items** — three new checks, each mutation-tested: a phase that drops `## Information items`, `### Inputs` or `### Outputs`; an output bullet that names an artifact without stating content; and a gate that regresses to the recorded unfalsifiable phrasings. The standard is also required to be reachable from `AGENTS.md` and the Definition of Done, and to keep stating the traceability limitation it does not solve.
 
 ### Fixed
 

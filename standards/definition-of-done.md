@@ -11,7 +11,9 @@ A change is considered done when applicable criteria are satisfied:
 - [ ] Vocabulary used as defined in `standards/terms.md`; any new term added there.
 - [ ] Normative text written with deliberate modality, per `standards/normative-language.md`.
 - [ ] Any quality gate introduced or changed names its artifact, its criterion and its
-      evidence.
+      evidence, per `standards/normative-language.md`.
+- [ ] Any information item introduced or changed states its content, per
+      `standards/information-items.md`.
 - [ ] Implementation complete.
 - [ ] Automated tests added/updated.
 - [ ] Required quality checks pass.

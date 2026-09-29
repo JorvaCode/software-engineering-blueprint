@@ -105,7 +105,7 @@ jobs:
           done
 
           echo "== Standards =="
-          for s in definition-of-done.md git.md code-design.md normative-language.md terms.md; do
+          for s in definition-of-done.md git.md code-design.md normative-language.md terms.md information-items.md; do
             check_file "standards/${s}"
           done
 
@@ -118,7 +118,8 @@ jobs:
             adr-005-skill-agente-adaptor-opencode.md \
             adr-006-calidad-diseno-codigo-solid-clean-code-patrones.md \
             adr-007-licencia-y-gobernanza-del-repositorio.md \
-            adr-008-terminologia-y-modalidad-normativa.md; do
+            adr-008-terminologia-y-modalidad-normativa.md \
+            adr-009-information-items-por-fase.md; do
             check_file "blueprint/architecture/adr/${a}"
           done
 
@@ -154,6 +155,57 @@ jobs:
           fi
           if ! grep -q 'Significant decision' standards/terms.md; then
             fail "standards/terms.md must define the significant decision criteria"
+          fi
+
+          echo "== Every process phase declares its information items =="
+          # A phase that names an artifact without stating its content leaves the
+          # reader to guess, so both the section and the subsection are required.
+          # Phase 00 is a statement of principles, not a process, and is excluded:
+          # see standards/information-items.md.
+          for i in $(seq -w 1 14); do
+            for doc in blueprint/${i}-*.md; do
+              [ -f "$doc" ] || { fail "missing phase document: blueprint/${i}-*.md"; continue; }
+              grep -qx '## Information items' "$doc" \
+                || fail "phase does not declare '## Information items': ${doc}"
+              for sub in '### Inputs' '### Outputs'; do
+                grep -qx "$sub" "$doc" || fail "phase missing '${sub}': ${doc}"
+              done
+              # A name with no content is not an information item, so every
+              # output bullet has to carry text after the artifact name.
+              awk -v doc="$doc" '
+                /^### Outputs/ { inout = 1; next }
+                /^## /        { inout = 0 }
+                inout && /^- / && !/\*\*[^*]+\*\* +[^[:space:]]/ { print "FAIL: unnamed output: " doc; bad = 1 }
+                END           { exit bad ? 1 : 0 }
+              ' "$doc" || failed=1
+            done
+          done
+
+          echo "== Quality gates name an artifact and cannot be satisfied by adjectives =="
+          # These are the exact phrasings the audit found to be unfalsifiable. They
+          # are listed rather than pattern-matched, because a gate that cannot fail
+          # is the failure mode, and the failure mode is specific to these words.
+          if grep -rnEi \
+            'clear, testable, feasible|clear and maintainable|appropriately|as needed|good (practice|quality)|high quality|clean and maintainable' \
+            blueprint/0*.md blueprint/1*.md; then
+            fail "quality gate regressed to unfalsifiable adjectives (see ADR-009)"
+          fi
+
+          echo "== Information items standard is declared and reachable =="
+          for f in AGENTS.md standards/definition-of-done.md; do
+            if ! grep -q 'standards/information-items.md' "$f"; then
+              fail "does not reference standards/information-items.md: $f"
+            fi
+          done
+          # The standard only governs if it states its own scope, so a process
+          # phase that omitted the section has to be detectable from the file.
+          if ! grep -q 'Information Items' standards/information-items.md; then
+            fail "standards/information-items.md does not define the required section"
+          fi
+          # The known limitation is only honest if it is stated in the artifact
+          # that carries the limitation, not just in the ADR.
+          if ! grep -q 'not yet make the phases checkable against each other' standards/information-items.md; then
+            fail "standards/information-items.md must state the traceability limitation it does not solve"
           fi
 
           echo "== Modality is used consistently in normative text =="

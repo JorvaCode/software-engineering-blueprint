@@ -12,6 +12,17 @@ Implement the approved design in small, reviewable increments.
 - Add tests with the implementation.
 - Keep documentation synchronized.
 
-## Definition of done
-Code builds, tests pass, quality checks pass and the change is reviewable. Design quality
-findings are recorded or explicitly reported as none.
+## Information items
+### Inputs
+- **Design** — the outputs of `04-design.md`.
+- **Project coding standards** — the conventions the project has adopted, whether or not they are written down. An unwritten standard is a decision waiting to be recorded.
+- **Repository state** — the branch, the existing tests, and the current build status.
+
+### Outputs
+- **Implementation** — the change, in increments that build and test independently.
+- **Tests** — added in the same change as the code they cover, never deferred.
+- **Conformance record** — the result of the project's lint, format and static analysis. Where the project runs none, the record states that, so the absence is a decision rather than an oversight.
+- **Documentation updates** — the documents this change makes wrong, updated in the same change.
+
+## Quality gate
+The change builds, the tests pass, the conformance record is clean, and the change is reviewable on its own. Design quality is recorded against `standards/code-design.md`, or explicitly reported as having no findings. A reviewer who did not pair on the change reaches the same verdict from the build output and the conformance record.

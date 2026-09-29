@@ -39,6 +39,14 @@ Normative text states its strength deliberately. `shall` is an obligation, `shou
 
 A quality gate is a check, not a sentiment. Every gate names the artifact inspected, the criterion it must meet, and the evidence a third party uses to reach the same verdict. See [ADR-008](blueprint/architecture/adr/adr-008-terminologia-y-modalidad-normativa.md).
 
+## What a phase produces
+
+Each phase in `blueprint/01` … `blueprint/14` declares an `## Information items` section with its `### Inputs` and its `### Outputs`, and every output states the content it shall hold rather than only what it is called. Naming an artifact is not specifying it: `02-analysis` used to ask for "an analysis decision", which told a reader what to call the thing and nothing about what to put in it.
+
+[standards/information-items.md](standards/information-items.md) holds the rules: what makes a declared content list sufficient, when an item is retained, and how it is versioned. It follows **ISO/IEC/IEEE 15289:2019**, and it records one thing it does not do — the phases are checkable against themselves, but not yet against each other, so a change to a requirement has no enforced link to the design and tests that implement it. See [ADR-009](blueprint/architecture/adr/adr-009-information-items-por-fase.md).
+
+Phase `00` is excluded from this requirement. It states principles rather than running a process, which is the same distinction ISO/IEC/IEEE 12207 makes.
+
 ## Design quality
 
 Design quality is checked, not assumed. `standards/code-design.md` treats SOLID and Clean Code as diagnostics that only produce a finding when they name a concrete problem, and admits a design pattern only when the design states the problem it solves, the evidence, the cost of the simpler alternative and the scope of application. Code that uses no pattern is never a defect. See [ADR-006](blueprint/architecture/adr/adr-006-calidad-diseno-codigo-solid-clean-code-patrones.md).
@@ -47,7 +55,7 @@ Design quality is checked, not assumed. `standards/code-design.md` treats SOLID 
 
 - `blueprint/` — normative lifecycle definition.
 - `templates/` — reusable project artifacts.
-- `standards/` — engineering standards, including the vocabulary and the normative language.
+- `standards/` — engineering standards, including the vocabulary, the normative language and the information items.
 - `AGENTS.md` — working rules for AI assistants in this repository.
 - `CONTRIBUTING.md` — working rules for human contributors, and the order of authority.
 - `SECURITY.md` — how to report a vulnerability privately.

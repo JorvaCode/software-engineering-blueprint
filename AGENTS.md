@@ -33,6 +33,8 @@ Read phase documents on demand. Do not preload the lifecycle.
 - Vocabulary: `standards/terms.md`. Load it before interpreting a term the phase
   documents do not define.
 - Modality and how to write a checkable gate: `standards/normative-language.md`
+- What a phase must produce and what makes it sufficient:
+  `standards/information-items.md`
 
 All paths are relative to this repository root.
 
