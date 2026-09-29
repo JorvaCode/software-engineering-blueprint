@@ -38,6 +38,7 @@ The blueprint defines **what must happen, what artifacts are expected, and what 
 - `blueprint/` — normative lifecycle definition.
 - `templates/` — reusable project artifacts.
 - `standards/` — engineering standards.
+- `AGENTS.md` — working rules for AI assistants in this repository.
 - `.opencode/skills/` — optional OpenCode adapter (routers to `blueprint/`).
 - `.opencode/agents/` — optional OpenCode subagent for autonomous blueprint passes.
 - `.github/workflows/` — example CI workflow and reusable workflow.
@@ -73,6 +74,8 @@ Two kinds of OpenCode component are provided:
 - **Agent** (`.opencode/agents/blueprint-orchestrator.md`) — a subagent for autonomous passes with no interactive user: readiness audits, per-phase gap reports, and creating missing blueprint artifacts. It does not modify application code.
 
 See [ADR-005](blueprint/architecture/adr/adr-005-skill-agente-adaptor-opencode.md) for the rationale behind the split.
+
+There is deliberately **no custom primary agent**. `scripts/blueprint-init.ps1` and `scripts/blueprint-init.sh` copy `.opencode/` into every installing project, so a primary agent would appear in the agent cycle of every consumer — the adapter would impose a default on teams that only asked for guidance. Interactive work uses the built-in primary agent plus the `blueprint` skill. See [AGENTS.md](AGENTS.md) for the working rules in this repository.
 
 GitHub Actions workflows belong in `.github/workflows/`.
 
