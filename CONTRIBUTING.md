@@ -62,4 +62,4 @@ Bugs and documentation errors go through the issue templates. Security issues mu
 
 ## Licence
 
-By contributing you agree that your contribution is licensed under the [Creative Commons Attribution 4.0 International](LICENSE) licence (CC BY 4.0), the licence of this repository.
+By contributing you agree that your contribution is licensed under the licence of the part you contributed to. The documentation — `blueprint/`, `templates/`, `standards/`, `examples/`, this file, `README.md` and the ADR records — is under the [Creative Commons Attribution 4.0 International](LICENSE) licence (CC BY 4.0). The code — `scripts/` and `.github/workflows/` — is under the [Apache License 2.0](LICENSE-CODE) licence. See [ADR-012](blueprint/architecture/adr/adr-012-licencia-del-codigo-y-distribucion-de-licencias.md).

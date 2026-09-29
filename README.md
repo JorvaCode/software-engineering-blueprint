@@ -141,4 +141,11 @@ Reporting and conduct go through GitHub's private channels, so neither needs a m
 
 ## License
 
-This work is licensed under the [Creative Commons Attribution 4.0 International](LICENSE) licence (CC BY 4.0). You may share and adapt it, including commercially, provided you give appropriate credit, link the licence and indicate changes.
+This work is licensed in two parts, because it contains two kinds of work.
+
+- **Documentation** — `blueprint/`, `templates/`, `standards/`, `examples/`, this README, `CONTRIBUTING.md` and the ADR records — under the [Creative Commons Attribution 4.0 International](LICENSE) licence (CC BY 4.0). You may share and adapt it, including commercially, provided you give appropriate credit, link the licence and indicate changes.
+- **Code** — the installers under `scripts/` and the workflow definitions under `.github/workflows/` — under the [Apache License 2.0](LICENSE-CODE).
+
+The split is not a preference. Creative Commons recommends against applying a CC licence to software, because it carries no terms about distributing source code, addresses patent rights only by exclusion, and is not compatible with the major software licences. Its own FAQ says so: <https://creativecommons.org/faq/>. See [ADR-012](blueprint/architecture/adr/adr-012-licencia-del-codigo-y-distribucion-de-licencias.md).
+
+Both installers copy `LICENSE` and `LICENSE-CODE` into the destination, unless the destination already has a `LICENSE` of its own, which is never overwritten. The two licences are also recorded in `.blueprint-install.json`, so a project can answer what the installed content is under without searching.

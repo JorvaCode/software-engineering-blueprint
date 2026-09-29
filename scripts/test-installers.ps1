@@ -60,8 +60,7 @@ try {
             Check "manifest version matches VERSION" ($parsed.version -eq $expected)
             Check "manifest lists 5 entries" ($parsed.entries.Count -eq 5)
             Check "manifest names the installer" ($parsed.installer -eq 'scripts/blueprint-init.ps1')
-        }
-    }
+        }    }
 
     Write-Host "  --- the allowlist must not leak anything ---"
     Check "no .opencode/package.json shipped" (-not (Test-Path -LiteralPath "$dest\.opencode\package.json"))
@@ -109,6 +108,48 @@ try {
         }
     }
     Check "every phase declares information items" ($noInfoItems.Count -eq 0)
+
+    Write-Host "  --- the licences travel with the content (ADR-012) ---"
+    # CC BY 4.0 conditions reuse on attribution. A consumer handed the content
+    # without the terms holds a permission whose condition it cannot satisfy, so
+    # the licences are part of what an install delivers, not an optional extra.
+    Check "LICENSE shipped"      (Test-Path -LiteralPath "$dest\LICENSE")
+    Check "LICENSE-CODE shipped" (Test-Path -LiteralPath "$dest\LICENSE-CODE")
+    Check "shipped LICENSE is the CC BY 4.0 text" `
+        (Select-String -LiteralPath "$dest\LICENSE" -Pattern 'Attribution 4.0 International' -Quiet)
+    Check "shipped LICENSE-CODE is the Apache-2.0 text" `
+        (Select-String -LiteralPath "$dest\LICENSE-CODE" -Pattern 'Apache License' -Quiet)
+    if ($valid) {
+        Check "manifest records the documentation licence" ($parsed.licenses.documentation -eq 'CC-BY-4.0')
+        Check "manifest records the code licence" ($parsed.licenses.code -eq 'Apache-2.0')
+        Check "manifest records both delivered licence files" ($parsed.licenses.files.Count -eq 2)
+        # The licence files must not inflate the content entry count: they travel
+        # by a separate rule, so entries stays 5.
+        Check "licence files are NOT counted as content entries" ($parsed.entries.Count -eq 5)
+    }
+    Check "installer prints the licence notice" ($out -match 'Licence:')
+
+    Write-Host "  --- a destination that owns its LICENSE is never overwritten (ADR-012) ---"
+    # The licence in a project's root is that project's. Overwriting it is a
+    # defect, not a courtesy. The manifest must then report zero delivered
+    # licence files, because claiming otherwise is the same false report that
+    # commit 679dbb4 removed from entries.
+    $destOwn = Join-Path $work 'ps-ownlic-target'
+    New-Item -ItemType Directory -Path $destOwn -Force | Out-Null
+    Set-Content -LiteralPath "$destOwn\LICENSE" -Value 'my own project licence'
+    $out4 = & "$repo\scripts\blueprint-init.ps1" $destOwn 2>&1 | Out-String
+    Check "pre-existing LICENSE is not overwritten" `
+        ((Get-Content -LiteralPath "$destOwn\LICENSE" -Raw) -match 'my own project licence')
+    Check "no LICENSE-CODE added beside it" (-not (Test-Path -LiteralPath "$destOwn\LICENSE-CODE"))
+    Check "installer says it left the LICENSE alone" ($out4 -match 'NOTICE')
+    $ownParsed = $null
+    $ownValid  = $true
+    try { $ownParsed = ([System.IO.File]::ReadAllText("$destOwn\.blueprint-install.json")) | ConvertFrom-Json } catch { $ownValid = $false }
+    Check "ownlicence manifest is valid JSON" $ownValid
+    if ($ownValid) {
+        Check "manifest claims no delivered licence file" ($ownParsed.licenses.files.Count -eq 0)
+        Check "manifest still records both licences" ($ownParsed.licenses.code -eq 'Apache-2.0')
+    }
 
     Write-Host "  --- re-running is safe and does not clobber the manifest ---"
     Set-Content -LiteralPath $manifestPath -Value 'hand-edited' -Encoding utf8

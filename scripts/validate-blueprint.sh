@@ -102,6 +102,42 @@ for i in scripts/blueprint-init.ps1 scripts/blueprint-init.sh; do
   fi
 done
 
+# One licence cannot honestly cover both the documentation and the code, and
+# Creative Commons says so itself rather than leaving it to be discovered:
+# a CC licence has no terms about distributing source code, addresses patents
+# only by exclusion, and is incompatible with the major software licences. So the
+# split has to be real in the files, not only in the ADR. See ADR-012.
+echo "== Licence split: documentation CC BY 4.0, code Apache-2.0 (see ADR-012) =="
+check_file LICENSE-CODE
+if [ ! -s LICENSE-CODE ]; then
+  fail "empty licence file: LICENSE-CODE"
+fi
+# Matched as a phrase, not as a version string. "Version 2.0" on its own also
+# appears in a file that is not the licence, which is how a check passes after
+# the text it was written for is replaced with something else.
+if ! grep -q 'Apache License' LICENSE-CODE; then
+  fail "LICENSE-CODE does not contain the Apache-2.0 legal code"
+fi
+if ! grep -q 'Version 2.0, January 2004' LICENSE-CODE; then
+  fail "LICENSE-CODE does not carry the Apache-2.0 version line"
+fi
+# A split nobody can find is a split that does not exist. Each file has to point
+# at the other, or a reader who opens the wrong one concludes the whole
+# repository is under that single licence.
+if ! grep -q 'LICENSE-CODE' LICENSE; then
+  fail "LICENSE does not point at LICENSE-CODE, so the code licence is invisible to a reader of LICENSE"
+fi
+if ! grep -q 'CC BY 4.0' LICENSE-CODE; then
+  fail "LICENSE-CODE does not say what the documentation is under"
+fi
+# The documentation has to stop claiming the repository is single-licensed, in
+# every place a human reads it.
+for d in README.md CONTRIBUTING.md; do
+  if ! grep -q 'LICENSE-CODE' "$d"; then
+    fail "${d} still describes the repository as single-licensed; it must name LICENSE-CODE"
+  fi
+done
+
 # An installer that copies a whole directory ships whatever happens to be in
 # the maintainer's working copy. Both installers therefore use an allowlist, and
 # the allowlist is the thing under test: copying .opencode as a unit, or copying
@@ -159,6 +195,48 @@ for i in scripts/blueprint-init.sh scripts/blueprint-init.ps1; do
     fail "${i} does not record the blueprint version in the manifest"
   fi
 done
+
+# CC BY 4.0 conditions reuse on attribution. A consumer handed the content
+# without the terms holds a permission whose condition it cannot satisfy, so the
+# licences are part of what an install delivers rather than an optional extra.
+# Both identifiers are required because a manifest naming only the documentation
+# licence understates the terms the consumer received. See ADR-012.
+echo "== Installers deliver the licences and record both (see ADR-012) =="
+for i in scripts/blueprint-init.sh scripts/blueprint-init.ps1; do
+  for l in LICENSE LICENSE-CODE; do
+    if ! grep -q "$l" "$i"; then
+      fail "${i} does not distribute ${l}"
+    fi
+  done
+  for lic in CC-BY-4.0 Apache-2.0; do
+    if ! grep -q "$lic" "$i"; then
+      fail "${i} does not record ${lic} in the manifest"
+    fi
+  done
+done
+
+# The rule that protects a consumer's own repository is that its LICENSE is never
+# overwritten, and a later edit is far more likely to drop that guard than to
+# break the copy. It is therefore asserted where it can actually be observed: in
+# the functional suite that runs both installers against a real destination. This
+# asserts the suite is still asserting it, so the coverage cannot be deleted
+# without the gate noticing.
+echo "== The licence delivery behaviour has functional coverage (see ADR-012) =="
+for t in scripts/test-installers.sh scripts/test-installers.ps1; do
+  check_file "$t"
+done
+if ! grep -q 'pre-existing LICENSE is not overwritten' scripts/test-installers.sh; then
+  fail "scripts/test-installers.sh does not assert that a destination LICENSE survives the install"
+fi
+if ! grep -q 'pre-existing LICENSE is not overwritten' scripts/test-installers.ps1; then
+  fail "scripts/test-installers.ps1 does not assert that a destination LICENSE survives the install"
+fi
+# A manifest that lists licence files it did not deliver is the same false report
+# that commit 679dbb4 removed from the entries array, reintroduced under a new
+# key. Assert the honest-reporting half, not just the delivery half.
+if ! grep -q 'manifest claims no delivered licence file' scripts/test-installers.sh; then
+  fail "scripts/test-installers.sh does not assert that an undelivered licence file is not claimed"
+fi
 
 # The reusable workflow is a second implementation, deliberately, and the docs
 # say so. What it must never be is a claim to be this gate: a consuming
@@ -238,7 +316,8 @@ for a in \
   adr-008-terminologia-y-modalidad-normativa.md \
   adr-009-information-items-por-fase.md \
   adr-010-vistas-y-escenarios-de-atributo-de-calidad.md \
-  adr-011-distribucion-versionada-y-manifiesto.md; do
+  adr-011-distribucion-versionada-y-manifiesto.md \
+  adr-012-licencia-del-codigo-y-distribucion-de-licencias.md; do
   check_file "blueprint/architecture/adr/${a}"
 done
 
