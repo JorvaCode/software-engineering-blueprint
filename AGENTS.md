@@ -29,6 +29,7 @@ Read phase documents on demand. Do not preload the lifecycle.
 - Pipeline, delivery, operations: `blueprint/09-continuous-integration.md` … `blueprint/14-continuous-improvement.md`
 - Done criteria: `standards/definition-of-done.md`
 - Commits and branches: `standards/git.md`
+- Design quality, SOLID, Clean Code and pattern selection: `standards/code-design.md`
 
 All paths are relative to this repository root.
 
@@ -41,9 +42,11 @@ All paths are relative to this repository root.
 5. Write tests in the same change as the code, never as a follow-up.
 6. Every acceptance criterion maps to a test or an explicit verification step.
 7. Do not introduce unrelated refactoring.
-8. A significant architectural decision needs an ADR in `blueprint/architecture/adr/`,
+8. A pattern is a finding only when the design justifies it. Never add an abstraction,
+   base class or interface that has no stated problem behind it.
+9. A significant architectural decision needs an ADR in `blueprint/architecture/adr/`,
    following the format of the existing ones.
-9. Close every change against `standards/definition-of-done.md` and report what was
+10. Close every change against `standards/definition-of-done.md` and report what was
    skipped and why.
 
 ## Adapter rules

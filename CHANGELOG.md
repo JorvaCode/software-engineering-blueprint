@@ -13,10 +13,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ### Added
 
+- **`standards/code-design.md`** — design quality standard. SOLID and Clean Code are defined as diagnostics that only produce a finding when they name a concrete problem, and design patterns are admitted only when the design states the problem, the evidence, the cost of the simpler alternative and the scope of application. The absence of a pattern is never a defect.
+- **ADR-006** — records the decision to add design quality criteria to the lifecycle and the reasoning against both a catalogue of patterns and no criteria at all.
+- **Lifecycle integration** — principle 10 in `blueprint/00-principles.md`, pattern selection criteria in `blueprint/04-design.md`, a design quality rule in `blueprint/05-implementation.md`, two review items in `blueprint/07-code-review.md` and the automatable subset in `blueprint/08-security-quality.md`.
 - **`AGENTS.md`** — working rules for AI assistants in this repository: order of authority, on-demand phase loading, and the rule that `blueprint/` wins over any skill.
 - **`blueprint-orchestrator` OpenCode subagent** — autonomous full-lifecycle pass for readiness audits and per-phase gap reports, creating missing blueprint artifacts without touching application code.
 - **ADR-005** — records the decision to separate the interactive skill from the autonomous subagent, and to not ship a custom primary agent in the adapter.
-- **CI validation** — checks `.opencode/agents/` and the orchestrator agent definition.
+- **CI validation** — checks `.opencode/agents/` and the orchestrator agent definition, that the Code Design standard exists, that the phases which gate on it reference it, and that the skills do not restate it.
 
 ## [1.0.0] - 2026-09-22
 

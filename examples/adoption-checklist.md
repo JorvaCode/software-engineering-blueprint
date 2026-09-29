@@ -23,6 +23,7 @@ The destination directory is created if it does not exist. A directory already p
 - [ ] Define project technology stack.
 - [ ] Define environments.
 - [ ] Define required quality/security gates.
+- [ ] Adopt `standards/code-design.md` as the design quality criterion.
 - [ ] Define deployment target.
 - [ ] Enable CI.
 - [ ] Define CD strategy.
@@ -34,6 +35,7 @@ The destination directory is created if it does not exist. A directory already p
 - [ ] Acceptance criteria
 - [ ] Analysis
 - [ ] Design
+- [ ] Pattern selection: justified, or explicitly not needed
 - [ ] Implementation
 - [ ] Tests
 - [ ] Review

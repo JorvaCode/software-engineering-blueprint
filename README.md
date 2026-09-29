@@ -33,6 +33,10 @@ A tool-agnostic, reusable blueprint for professional software delivery, from req
 
 The blueprint defines **what must happen, what artifacts are expected, and what quality gates apply**. Individual projects choose their language, IDE, framework, cloud, registry and deployment platform.
 
+## Design quality
+
+Design quality is checked, not assumed. `standards/code-design.md` treats SOLID and Clean Code as diagnostics that only produce a finding when they name a concrete problem, and admits a design pattern only when the design states the problem it solves, the evidence, the cost of the simpler alternative and the scope of application. Code that uses no pattern is never a defect. See [ADR-006](blueprint/architecture/adr/adr-006-calidad-diseno-codigo-solid-clean-code-patrones.md).
+
 ## Repository structure
 
 - `blueprint/` — normative lifecycle definition.
