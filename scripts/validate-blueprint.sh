@@ -133,11 +133,38 @@ done
 
 echo "== Installers write an adoption manifest =="
 for i in scripts/blueprint-init.sh scripts/blueprint-init.ps1; do
-  if ! grep -q 'blueprint-install.json' "$i"; then
+  if ! grep -q 'blueprint-install\.json' "$i"; then
     fail "${i} does not write .blueprint-install.json"
   fi
   if ! grep -q 'VERSION' "$i"; then
     fail "${i} does not record the blueprint version in the manifest"
+  fi
+done
+
+# Documentation that describes the installers has to describe the installers that
+# exist. A consumer who reads the adoption checklist is entitled to the behaviour
+# the installers actually have, and the checklist drifts silently otherwise.
+echo "== Adoption documentation matches the installers =="
+check_doc_adoption() {
+  # Matched as a whole code-formatted token. Do not try to tell ".opencode/"
+  # from ".opencode/agents/" by what follows the slash: the subdirectory names
+  # will change, the fact that the whole directory is not copied will not. The
+  # directory is only described as a unit when it is written as exactly that.
+  if grep -q '`\.opencode/`' "$1"; then
+    fail "${1} describes the installers as copying .opencode/ as a whole directory"
+  fi
+  for entry in .opencode/agents .opencode/skills; do
+    if ! grep -q "$entry" "$1"; then
+      fail "${1} does not name the installed entry ${entry}"
+    fi
+  done
+  if ! grep -q 'blueprint-install\.json' "$1"; then
+    fail "${1} does not mention the adoption manifest .blueprint-install.json"
+  fi
+}
+for d in README.md examples/adoption-checklist.md; do
+  if [ -f "$d" ]; then
+    check_doc_adoption "$d"
   fi
 done
 
