@@ -38,7 +38,8 @@ The blueprint defines **what must happen, what artifacts are expected, and what 
 - `blueprint/` — normative lifecycle definition.
 - `templates/` — reusable project artifacts.
 - `standards/` — engineering standards.
-- `.opencode/skills/` — optional OpenCode adapter.
+- `.opencode/skills/` — optional OpenCode adapter (routers to `blueprint/`).
+- `.opencode/agents/` — optional OpenCode subagent for autonomous blueprint passes.
 - `.github/workflows/` — example CI workflow and reusable workflow.
 - `examples/` — examples for adopting the blueprint.
 
@@ -64,7 +65,14 @@ Copy the relevant directories into a project or keep this repository as a centra
 
 The blueprint is IDE-agnostic: it can be used from IntelliJ IDEA, Visual Studio, VS Code or any other IDE. It is also technology-agnostic at the process level — each project chooses its own language, framework, cloud, registry and deployment platform.
 
-The OpenCode skills are optional and automatically discoverable from `.opencode/skills/<name>/SKILL.md`. OpenCode is an adapter, not a dependency: the blueprint works perfectly without it.
+The OpenCode integration is optional and automatically discoverable. OpenCode is an adapter, not a dependency: the blueprint works perfectly without it.
+
+Two kinds of OpenCode component are provided:
+
+- **Skills** (`.opencode/skills/<name>/SKILL.md`) — routers used interactively. They point at the normative phase documents in `blueprint/` and never restate them. Use the `blueprint` skill for guided, conversational work, or a phase skill (`blueprint-requirements`, `blueprint-architecture`, `blueprint-development`, `blueprint-cicd`) for a single phase.
+- **Agent** (`.opencode/agents/blueprint-orchestrator.md`) — a subagent for autonomous passes with no interactive user: readiness audits, per-phase gap reports, and creating missing blueprint artifacts. It does not modify application code.
+
+See [ADR-005](blueprint/architecture/adr/adr-005-skill-agente-adaptor-opencode.md) for the rationale behind the split.
 
 GitHub Actions workflows belong in `.github/workflows/`.
 

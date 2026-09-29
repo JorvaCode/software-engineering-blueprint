@@ -43,6 +43,7 @@ jobs:
           check_dir examples
           check_dir blueprint/architecture/adr
           check_dir .opencode/skills
+          check_dir .opencode/agents
           check_dir .github/workflows
 
           echo "== Installers =="
@@ -81,13 +82,31 @@ jobs:
             adr-001-blueprint-agnostic-ide-tecnologia.md \
             adr-002-opencode-adaptador-opcional.md \
             adr-003-blueprint-docs-as-code.md \
-            adr-004-modelo-distribucion-reutilizacion.md; do
+            adr-004-modelo-distribucion-reutilizacion.md \
+            adr-005-skill-agente-adaptor-opencode.md; do
             check_file "blueprint/architecture/adr/${a}"
           done
 
-          echo "== OpenCode skills =="
+          echo "== OpenCode adapter =="
           for s in blueprint blueprint-architecture blueprint-cicd blueprint-development blueprint-requirements; do
             check_file ".opencode/skills/${s}/SKILL.md"
+            if [ -z "$(head -n 1 ".opencode/skills/${s}/SKILL.md")" ]; then
+              fail "skill without frontmatter: ${s}"
+            fi
+          done
+          check_file .opencode/agents/blueprint-orchestrator.md
+          if ! head -n 1 .opencode/agents/blueprint-orchestrator.md | grep -q '^---$'; then
+            fail "agent without frontmatter: blueprint-orchestrator"
+          fi
+          if ! grep -q '^description:' .opencode/agents/blueprint-orchestrator.md; then
+            fail "agent without description: blueprint-orchestrator"
+          fi
+
+          echo "== Adapter must not duplicate the normative lifecycle =="
+          for s in blueprint blueprint-architecture blueprint-cicd blueprint-development blueprint-requirements; do
+            if grep -qE '^## (Core lifecycle|Fundamental rules|Phase [0-9])' ".opencode/skills/${s}/SKILL.md"; then
+              fail "skill ${s} restates the lifecycle instead of routing to blueprint/"
+            fi
           done
 
           echo "== Empty markdown files =="
