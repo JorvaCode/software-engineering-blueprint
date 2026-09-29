@@ -13,6 +13,7 @@ All paths below are relative to the project root.
 
 - `blueprint/03-architecture.md`
 - `blueprint/04-design.md`
+- `standards/code-design.md`
 - `templates/adr.md`
 - `templates/change.md`
 - `blueprint/architecture/adr/` — decisions recorded so far; read before proposing a new one
@@ -29,9 +30,13 @@ All paths below are relative to the project root.
    named `adr-NNN-slug.md` and following the format of the existing ADRs.
 5. Define interfaces, contracts, data models, validation, error handling, transaction
    boundaries and the test strategy.
-6. Reject designs that cannot be tested.
+6. Select a pattern only when `standards/code-design.md` is satisfied, and record the
+   justification in `templates/change.md` or in an ADR. The simpler option is the default;
+   a pattern without a stated problem is not a design.
+7. Reject designs that cannot be tested.
 
 ## Output
 
 An ADR per significant decision plus a `templates/change.md` describing an
-implementation-ready design with a stated test strategy.
+implementation-ready design with a stated test strategy. Any pattern named here is
+accompanied by its justification, or omitted.

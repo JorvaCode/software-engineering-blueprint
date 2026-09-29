@@ -19,6 +19,8 @@ All paths below are relative to the project root.
 5. Produce or update the artifact the phase requires.
 6. Keep traceability between requirement, design, implementation and tests.
 7. Verify `standards/definition-of-done.md` before declaring work complete.
+8. Check design quality against `standards/code-design.md`. Patterns require a stated
+   justification; their absence is never a defect.
 
 `blueprint/00-principles.md` holds the full principle set.
 
@@ -50,7 +52,8 @@ All paths below are relative to the project root.
 3. Read `blueprint/04-design.md` and record the approach with `templates/change.md`.
 4. Implement following `blueprint/05-implementation.md` and `blueprint/06-testing.md`.
 5. Run the checks in `blueprint/08-security-quality.md` that apply to the project.
-6. Close against `standards/definition-of-done.md` and `standards/git.md`.
+6. Close against `standards/definition-of-done.md`, `standards/git.md` and
+   `standards/code-design.md`.
 
 ## Phase skills
 

@@ -51,7 +51,7 @@ do not evaluate a phase from its title alone.
 | 14 Continuous improvement | `blueprint/14-continuous-improvement.md` |
 
 Artifacts: `templates/requirement.md`, `templates/adr.md`, `templates/change.md`.
-Standards: `standards/definition-of-done.md`, `standards/git.md`.
+Standards: `standards/definition-of-done.md`, `standards/git.md`, `standards/code-design.md`.
 
 ## Procedure
 
@@ -75,6 +75,10 @@ Standards: `standards/definition-of-done.md`, `standards/git.md`.
    blueprint artifacts. Every other finding is a report item.
 7. Do not invent evidence. A missing `blueprint/03-architecture.md` equivalent in a project
    is a finding, not a licence to write a speculative architecture.
+8. When judging design quality with `standards/code-design.md`, report a pattern or an
+   abstraction as a finding only when the repository shows it causing a stated problem or
+   lacking the justification the standard requires. Code that uses no pattern, or that is
+   not maximally SOLID, is not a gap. Do not recommend a pattern as an improvement.
 
 ## Output
 
