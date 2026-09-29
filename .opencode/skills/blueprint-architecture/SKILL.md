@@ -3,16 +3,35 @@ name: blueprint-architecture
 description: Apply the Software Engineering Blueprint for architecture and technical design decisions.
 ---
 
-# Blueprint Architecture Skill
+# Blueprint — Architecture and Technical Design
 
-Before significant implementation:
+Covers lifecycle phases 03 and 04. Read the phase documents; they are the source of truth.
 
-1. Inspect the existing architecture.
-2. Identify boundaries and dependencies.
-3. Consider alternatives and trade-offs.
-4. Preserve established architectural rules unless there is a documented reason to change them.
-5. Record significant decisions using an ADR.
-6. Define interfaces, contracts and operational implications.
-7. Ensure the design is testable.
+All paths below are relative to the project root.
 
-Use `templates/adr.md` for significant architectural decisions.
+## Documents
+
+- `blueprint/03-architecture.md`
+- `blueprint/04-design.md`
+- `templates/adr.md`
+- `templates/change.md`
+- `blueprint/architecture/adr/` — decisions recorded so far; read before proposing a new one
+
+## Procedure
+
+1. Read the existing ADRs and the current code before proposing a design. The default
+   answer is the existing architecture, not a new one.
+2. Establish component boundaries, responsibilities, dependencies, APIs, data ownership,
+   integration patterns and security boundaries.
+3. State at least two alternatives and the trade-off that made you choose. A decision with
+   no rejected alternative is not a decision.
+4. Record every significant decision with `templates/adr.md` in `blueprint/architecture/adr/`,
+   named `adr-NNN-slug.md` and following the format of the existing ADRs.
+5. Define interfaces, contracts, data models, validation, error handling, transaction
+   boundaries and the test strategy.
+6. Reject designs that cannot be tested.
+
+## Output
+
+An ADR per significant decision plus a `templates/change.md` describing an
+implementation-ready design with a stated test strategy.
