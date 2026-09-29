@@ -73,7 +73,7 @@ jobs:
           done
 
           echo "== Standards =="
-          for s in definition-of-done.md git.md; do
+          for s in definition-of-done.md git.md code-design.md; do
             check_file "standards/${s}"
           done
 
@@ -83,9 +83,25 @@ jobs:
             adr-002-opencode-adaptador-opcional.md \
             adr-003-blueprint-docs-as-code.md \
             adr-004-modelo-distribucion-reutilizacion.md \
-            adr-005-skill-agente-adaptor-opencode.md; do
+            adr-005-skill-agente-adaptor-opencode.md \
+            adr-006-calidad-diseno-codigo-solid-clean-code-patrones.md; do
             check_file "blueprint/architecture/adr/${a}"
           done
+
+          echo "== Code design standard is referenced by the phases that gate on it =="
+          for d in 00-principles 04-design 05-implementation 07-code-review 08-security-quality; do
+            if ! grep -q 'standards/code-design.md' "blueprint/${d}.md"; then
+              fail "phase does not reference standards/code-design.md: blueprint/${d}.md"
+            fi
+          done
+          if ! grep -q 'standards/code-design.md' standards/definition-of-done.md; then
+            fail "definition of done does not reference standards/code-design.md"
+          fi
+
+          echo "== Code design standard keeps patterns optional =="
+          if ! grep -q 'Absence is not a finding' standards/code-design.md; then
+            fail "standards/code-design.md must state that the absence of a pattern is not a finding"
+          fi
 
           echo "== OpenCode adapter =="
           for s in blueprint blueprint-architecture blueprint-cicd blueprint-development blueprint-requirements; do
@@ -106,6 +122,9 @@ jobs:
           for s in blueprint blueprint-architecture blueprint-cicd blueprint-development blueprint-requirements; do
             if grep -qE '^## (Core lifecycle|Fundamental rules|Phase [0-9])' ".opencode/skills/${s}/SKILL.md"; then
               fail "skill ${s} restates the lifecycle instead of routing to blueprint/"
+            fi
+            if grep -qE '^#+ .*(Justification test|Absence is not a finding|SOLID as a diagnostic)' ".opencode/skills/${s}/SKILL.md"; then
+              fail "skill ${s} restates standards/code-design.md instead of routing to it"
             fi
           done
 
