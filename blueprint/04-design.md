@@ -12,5 +12,10 @@ Translate architecture into an implementation-ready design.
 - Define test strategy.
 - Identify configuration and operational needs.
 
+## Pattern selection
+A pattern is selected only when `standards/code-design.md` is satisfied: the design states
+the problem it solves, the evidence that the problem is real, the cost of the simpler
+alternative, and the scope of application. Code that does not use a pattern is not a defect.
+
 ## Quality gate
 Developers can implement the change without inventing critical architectural decisions during coding.

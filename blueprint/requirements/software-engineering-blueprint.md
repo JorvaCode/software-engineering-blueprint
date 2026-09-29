@@ -11,7 +11,7 @@ Provide a tool-agnostic, language-agnostic and reusable engineering lifecycle th
 - Definition of the full lifecycle: Requirements, Analysis, Architecture, Technical Design, Implementation, Testing, Code Review, Security & Quality, Continuous Integration, Packaging, Continuous Delivery, Deployment, Observability, Continuous Improvement.
 - Normative definition for each phase (blueprint/00-principles.md, blueprint/01-requirements.md .. blueprint/14-continuous-improvement.md).
 - Reusable artifacts: templates for requirements, ADRs and changes.
-- Engineering standards: Definition of Done and Git standard.
+- Engineering standards: Definition of Done, Git standard and Code Design standard.
 - Optional OpenCode adapter: skills discoverable from .opencode/skills/<name>/SKILL.md.
 - Example CI workflow and reusable GitHub workflow (.github/workflows/).
 - Adoption examples and checklist (examples/).
@@ -27,7 +27,7 @@ Provide a tool-agnostic, language-agnostic and reusable engineering lifecycle th
 - FR-01: The blueprint shall define the lifecycle phases in a fixed, ordered sequence.
 - FR-02: Each phase shall specify what must happen, which artifacts are expected, and which quality gates apply.
 - FR-03: The blueprint shall provide reusable templates for requirements, ADRs and change descriptions.
-- FR-04: The blueprint shall provide engineering standards covering the Definition of Done and Git.
+- FR-04: The blueprint shall provide engineering standards covering the Definition of Done, Git, and code design quality (SOLID and Clean Code as diagnostics, design patterns only when justified).
 - FR-05: The blueprint shall provide an example CI workflow and a reusable GitHub workflow that validate the blueprint structure.
 - FR-06: The blueprint shall provide an optional OpenCode adapter whose skills are automatically discoverable from .opencode/skills/<name>/SKILL.md.
 - FR-07: The blueprint shall provide adoption guidance and a checklist for new projects and teams.
@@ -49,6 +49,7 @@ Provide a tool-agnostic, language-agnostic and reusable engineering lifecycle th
 - Given the OpenCode adapter, when OpenCode is used, then the skills are discoverable from .opencode/skills/<name>/SKILL.md without further configuration.
 - Given the GitHub workflows, when CI runs on a valid repository, then the required blueprint structure files are validated successfully.
 - Given the Definition of Done, when a change is marked done, then all applicable criteria are satisfied and documented.
+- Given a change that introduces a design pattern, when the design is reviewed, then the problem it solves, the evidence, the cost of the simpler alternative and the scope of application are stated, and a change without patterns is not reported as a finding.
 
 ## Dependencies
 - Git and GitHub (or an equivalent platform) for branching, pull requests and CI execution; the workflows are examples, not hard requirements.

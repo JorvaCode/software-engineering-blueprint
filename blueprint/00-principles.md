@@ -26,3 +26,8 @@ Production and development feedback feed continuous improvement.
 
 ## 9. Tool independence
 The process must not depend on a particular IDE or coding assistant.
+
+## 10. Design quality is justified, not assumed
+Code and design decisions are checked against `standards/code-design.md`. A design
+principle or a pattern is applied when a stated problem justifies it, never by
+custom or by anticipation. The absence of a pattern is not a defect.
