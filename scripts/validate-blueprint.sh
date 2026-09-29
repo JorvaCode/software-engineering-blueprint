@@ -88,27 +88,45 @@ done
 # the allowlist is the thing under test: copying .opencode as a unit, or copying
 # any build manifest, is the defect this check exists to catch.
 echo "== Installers copy an allowlist, not a directory tree =="
-for i in scripts/blueprint-init.sh scripts/blueprint-init.ps1; do
-  if grep -qE '^\s*(OPTIONAL_DIRS|optionalDirs)\s*=\s*"?\.opencode"?' "$i"; then
-    fail "${i} copies .opencode as a whole directory instead of an allowlist"
+# The DECLARED allowlist is the thing under test, and it is parsed rather than
+# grepped. Grepping the whole file is not a weaker test, it is a different and
+# useless one: both installers name every required entry in their header comment,
+# so a check that greps the file still passes after the executable allowlist has
+# been changed to copy .opencode as a unit. That is precisely the regression this
+# check exists to catch, and it is caught only by reading the assignment.
+declare_allowlist() {
+  if grep -qE '^[[:space:]]*ALLOWLIST[[:space:]]*=' "$1"; then
+    sed -nE 's/^[[:space:]]*ALLOWLIST[[:space:]]*="([^"]*)".*/\1/p' "$1" | head -1
+  else
+    sed -nE 's/^[[:space:]]*\$allowlist[[:space:]]*=.*@\((.*)\).*/\1/p' "$1" \
+      | head -1 | tr -d "'," | tr -s ' ' | sed -E 's/^ //; s/ $//'
   fi
-  if ! grep -q 'ALLOWLIST\|allowlist' "$i"; then
+}
+for i in scripts/blueprint-init.sh scripts/blueprint-init.ps1; do
+  allowlist=$(declare_allowlist "$i")
+  if [ -z "$allowlist" ]; then
     fail "${i} does not declare an install allowlist"
+    continue
   fi
-done
-# The allowlist has to name the adapter subdirectories explicitly, or the
-# installer silently stops shipping the skills and the agent.
-for i in scripts/blueprint-init.sh scripts/blueprint-init.ps1; do
-  for entry in '.opencode/agents' '.opencode/skills'; do
-    if ! grep -q "$entry" "$i"; then
-      fail "${i} does not install ${entry}"
+  for entry in blueprint templates standards .opencode/agents .opencode/skills; do
+    # Unquoted on purpose: this word-splits the allowlist into its entries.
+    if ! printf '%s\n' $allowlist | grep -qxF "$entry"; then
+      fail "${i} allowlist does not install ${entry}"
     fi
   done
+  # The whole-directory form, compared as a whole token so that a correctly
+  # spelled .opencode/agents is not mistaken for it.
+  if printf '%s\n' $allowlist | grep -qxF '.opencode'; then
+    fail "${i} allowlist copies .opencode as a whole directory; list its subdirectories instead"
+  fi
 done
+
 # An allowlist makes a post-copy denylist unnecessary. If one is still there, the
-# installer has not actually been converted.
+# installer has not actually been converted. Matched on the removal rather than
+# on the word, so a comment describing the old behaviour does not fail the gate.
+echo "== Installers do not fall back to a post-copy denylist =="
 for i in scripts/blueprint-init.sh scripts/blueprint-init.ps1; do
-  if grep -q 'node_modules' "$i"; then
+  if grep -qE '(rm[[:space:]]+(-[a-zA-Z]+[[:space:]]+)*[^|;]*node_modules)|(Remove-Item[^|;]*node_modules)' "$i"; then
     fail "${i} still removes node_modules after copying; the allowlist makes that cleanup unnecessary"
   fi
 done
@@ -329,6 +347,14 @@ fi
 echo "== Internal markdown links =="
 # Reference-style links are resolved too. An inline-only check passes a document
 # whose [text][ref] definitions were deleted, which is how a link rots.
+#
+# Code is stripped first. A document that explains link syntax contains the
+# literal form in a code span, and that is an example, not a link. Stripping can
+# only hide a real link, never invent a false one, so it fails in the safe
+# direction.
+strip_code() {
+  sed -E '/^[[:space:]]*(```|~~~)/,/^[[:space:]]*(```|~~~)/d; s/`[^`]*`//g'
+}
 while IFS= read -r doc; do
   while IFS= read -r link; do
     case "$link" in
@@ -343,11 +369,32 @@ while IFS= read -r doc; do
       fi
     fi
   done < <(
-    {
-      grep -oE '\]\([^)]*\)' "$doc" | sed 's/^](//; s/)$//'
-      grep -oE '^\[[^]]+\]:[[:space:]]*[^[:space:]]+' "$doc" | sed -E 's/^\[[^]]+\]:[[:space:]]*//'
+    strip_code < "$doc" | {
+      grep -oE '\]\([^)]*\)' | sed 's/^](//; s/)$//'
+      grep -oE '^\[[^]]+\]:[[:space:]]*[^[:space:]]+' | sed -E 's/^\[[^]]+\]:[[:space:]]*//'
     } 2>/dev/null
   )
+done < <(find . -name '*.md' -type f -not -path './.git/*' -not -path './.opencode/node_modules/*' | sort)
+
+echo "== Reference-style links resolve to a definition =="
+# Checking definitions alone is not enough. A document can define every reference
+# it uses and still have an undefined one, because the two are separate: delete
+# a definition and every [text][ref] that pointed at it becomes a dead link that
+# renders as literal text. Markdown reference definitions are document-scoped, so
+# a use with no definition in the same file is a defect.
+#
+# A [text][ref](url) use carries its own inline target, so it does not need a
+# definition and is skipped, as is the collapsed [text][] form.
+while IFS= read -r doc; do
+  defs=$(strip_code < "$doc" | grep -oE '^\[[^]]+\]:' 2>/dev/null | tr '[:upper:]' '[:lower:]')
+  while IFS= read -r use; do
+    [ -n "$use" ] || continue
+    label=$(printf '%s' "$use" | sed -E 's/^\]\[//; s/\]$//' | tr '[:upper:]' '[:lower:]')
+    [ -n "$label" ] || continue
+    if ! printf '%s\n' "$defs" | grep -qxF "[$label]:"; then
+      fail "reference-style link '[${label}]' is used but never defined in '${doc#./}'"
+    fi
+  done < <(strip_code < "$doc" | grep -oE '\]\[[^]]+\](\([^)]*\))?' 2>/dev/null | grep -v '(')
 done < <(find . -name '*.md' -type f -not -path './.git/*' -not -path './.opencode/node_modules/*' | sort)
 
 echo "== Markdown heading anchors referenced by links =="

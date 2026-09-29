@@ -150,24 +150,44 @@ identificador es la version, y es la que el proyecto controla.
 
 ## Verificacion
 
-La decision se comprobo ejecutando los dos instaladores contra un destino real, no solo
-leyendolos. Las pruebas viven en `scripts/test-installers.sh` y
-`scripts/test-installers.ps1` y se ejecutan en CI, porque un script de instalacion que
-nadie ejecuta no es un script probado.
+La decision se comprobo ejecutando los dos instaladores contra un destino real y
+mutando el validador, no solo leyendolos. Las pruebas de los instaladores viven
+en `scripts/test-installers.sh` y `scripts/test-installers.ps1` y se ejecutan en
+CI, porque un script de instalacion que nadie ejecuta no es un script probado.
 
-Dos defectos aparecieron al ejecutarlos y ninguno era visible leyendo el codigo:
+Cinco defectos aparecieron al ejecutar en vez de leer, y ninguno era visible en
+el codigo:
 
-- El instalador de PowerShell usaba `Write-Host`, que escribe al host pasando por alto el
-  flujo de exito. `$out = & .\blueprint-init.ps1 C:\x` devolvia vacio, lo que hacia el
-  instalador intestable e inservible desde otro script, y lo diferenciaba de su hermano de
-  bash, que si escribe en stdout. Se comprobo que `[Console]::Out` tampoco sirve, porque
-  esquiva PowerShell por completo; solo `Write-Output` es capturable, y `Write-Host` solo
-  con `6>&1`. Corregido a `Write-Output`, con errores a stderr real.
-- Una prueba propia de absence de BOM daba falso positivo. `ReadAllText` decodifica y
-  descarta el BOM, y `String.StartsWith([char]0xFEFF)` resuelve mal su sobrecarga en
-  Windows PowerShell: devolvia `True` sobre un archivo que empezaba por `7b 0a`. El
-  instalador escribia correctamente sin BOM; la comprobacion ahora mira los bytes.
+- El instalador de PowerShell usaba `Write-Host`, que escribe al host pasando
+  por alto el flujo de exito. `$out = & .\blueprint-init.ps1 C:\x` devolvia
+  vacio, lo que hacia el instalador intestable e inservible desde otro script, y
+  lo diferenciaba de su hermano de bash, que si escribe en stdout. Se comprobo
+  que `[Console]::Out` tampoco sirve, porque esquiva PowerShell por completo;
+  solo `Write-Output` es capturable, y `Write-Host` solo con `6>&1`.
+- El validador comprobaba las *definiciones* de enlace pero no sus *usos*. Un
+  documento podia definir cada referencia que usaba y aun asi tener una
+  indefinida, porque son dos comprobaciones separadas: al borrar una definicion,
+  cada `[texto][ref]` que apuntaba a ella deja de ser un enlace sin que nada lo
+  note. Ahora un uso sin definicion en el mismo archivo es un defecto.
+- El validador buscaba la allowlist en todo el archivo, y ambos instaladores
+  nombran cada entrada requerida en el comentario de cabecera. Una comprobacion
+  que hace `grep` del archivo sigue pasando despues de que la allowlist
+  ejecutable cambie a copiar `.opencode` entero: es decir, pasaba exactamente la
+  regresion que el check existe para detectar. Ahora se parsea la asignacion y se
+  inspecciona el valor declarado, no el texto que lo rodea.
+- Al comprobar usos de enlace aparecieron falsos positivos en documentos que
+  explican la sintaxis de los enlaces: el literal va en un `span` de codigo y no
+  es un enlace. El validador descarta codigo antes de escanear. Descartar solo
+  puede ocultar un enlace real, nunca inventar uno, que es la direccion segura en
+  la que fallar.
+- Una prueba propia de ausencia de BOM daba falso positivo. `ReadAllText`
+  decodifica y descarta el BOM, y `String.StartsWith([char]0xFEFF)` resuelve mal
+  su sobrecarga en Windows PowerShell: devolvia `True` sobre un archivo que
+  empezaba por `7b 0a`. El instalador escribia correctamente sin BOM; la
+  comprobacion ahora mira los bytes.
 
-Se deja constancia de los dos porque son la clase de defecto que aparece al ejecutar y
-no al leer, y porque el primero habria sido facil de declarar «funciona» sin haberlo
-intentado nunca.
+Se deja constancia de los cinco porque son la clase de defecto que aparece al
+ejecutar y no al leer, y porque el primero habria sido facil de declarar
+«funciona» sin haberlo intentado nunca. Dos de ellos —el `Write-Host` y la
+allowlist mal comprobada— eran la razon entera de este ADR, y ninguno se habria
+encontrado leyendo el codigo.
