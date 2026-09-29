@@ -9,12 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 ### Changed
 
 - **OpenCode skills reduced to routers** — `blueprint` and the four phase skills no longer duplicate the normative lifecycle. They now map each phase to its document in `blueprint/` and declare all paths as relative to the project root, so the adapter cannot silently drift from the core.
-- **README** — documents the skill/agent split and the agent location.
+- **README** — documents the skill/agent split, the agent location, and why the adapter ships no primary agent.
 
 ### Added
 
+- **`AGENTS.md`** — working rules for AI assistants in this repository: order of authority, on-demand phase loading, and the rule that `blueprint/` wins over any skill.
 - **`blueprint-orchestrator` OpenCode subagent** — autonomous full-lifecycle pass for readiness audits and per-phase gap reports, creating missing blueprint artifacts without touching application code.
-- **ADR-005** — records the decision to separate the interactive skill from the autonomous subagent.
+- **ADR-005** — records the decision to separate the interactive skill from the autonomous subagent, and to not ship a custom primary agent in the adapter.
 - **CI validation** — checks `.opencode/agents/` and the orchestrator agent definition.
 
 ## [1.0.0] - 2026-09-22
