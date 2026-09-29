@@ -6,15 +6,30 @@ name: Reusable Blueprint Validation
 #     blueprint:
 #       uses: JorvaCode/software-engineering-blueprint/.github/workflows/reusable-blueprint-validation.yml@v1.0.0
 #
-# The validation itself is not duplicated here: this workflow runs the same
-# scripts/validate-blueprint.sh that the blueprint's own CI runs. Two copies of a
-# gate is one more gate to keep in sync, and the copy that drifts is the one
-# nobody is looking at. See ADR-011.
+# Pin a tag, never a branch: this workflow is a quality gate, and a gate that
+# moves under you is not a gate. Note that @v1.0.0 still carries the original
+# three-call version of this file; the floor described below ships in the next
+# tag. Until then, pin the branch if you need the current checks, and expect to
+# re-pin when the tag lands.
 #
-# The minimum required checks are the structural ones: the installed directories
-# exist and the information items are declared. A consumer is not the blueprint
-# repository, so the checks that only make sense here (ADRs, governance, the
-# VERSION file, this repository's adapter) are out of scope for it.
+# The validation is NOT shared with this repository's gate. It cannot be:
+# scripts/validate-blueprint.sh validates *this* repository and the installers
+# deliberately do not copy scripts/ into a consumer, so a consuming repository
+# has no such file to run. Sharing it would mean shipping the repository's own
+# maintenance gate to every consumer and teaching the installer to copy the
+# directory it just excluded. The checks below are therefore written out here,
+# scoped to the structural floor a consumer actually needs.
+#
+# That floor is: the installed directories exist, all fifteen phase documents
+# exist, each process phase declares its information items, and an adoption
+# manifest records a version. The repository-only checks — ADRs, governance,
+# VERSION, this repository's adapter — are out of scope for a consumer, and so
+# are the reference-link checks, which are about this repository's own prose.
+#
+# Keeping this list honest is a real obligation: it is a second implementation
+# and it will drift. What is enforced is only that this workflow never invokes
+# the repository gate, which would fail for every consumer. The prose that
+# describes it is reviewed, not checked. See ADR-011.
 
 on:
   workflow_call:

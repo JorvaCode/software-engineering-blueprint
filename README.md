@@ -91,13 +91,15 @@ GitHub Actions workflows belong in `.github/workflows/`.
 
 ## Validating
 
-The validation gate lives in [`scripts/validate-blueprint.sh`](scripts/validate-blueprint.sh), not inline in a workflow. It runs in this repository's CI, it runs in the reusable workflow offered to consumers, and it runs locally with no Actions involved:
+The validation gate lives in [`scripts/validate-blueprint.sh`](scripts/validate-blueprint.sh), not inline in a workflow. It runs in this repository's CI and it runs locally with no Actions involved:
 
 ```bash
 bash scripts/validate-blueprint.sh
 ```
 
-One implementation, three callers. A gate copied into two workflows is a gate that will eventually disagree with itself, and the copy nobody looks at is the one that goes stale.
+One implementation, two callers. A gate copied into two workflows is a gate that will eventually disagree with itself, and the copy nobody looks at is the one that goes stale.
+
+The [reusable workflow](.github/workflows/reusable-blueprint-validation.yml) offered to consumers is deliberately **not** a third caller, and cannot be: it validates a *consuming* repository, `scripts/` is never installed into one, and most of this gate checks facts that only exist here (ADRs, governance, `VERSION`, this repository's own prose links). So the reusable workflow carries its own small structural floor — installed directories, all fifteen phase documents, information items declared, adoption manifest versioned — and `scripts/validate-blueprint.sh` asserts that the reusable workflow does not pretend to be this gate.
 
 The installers are covered by their own suites, `scripts/test-installers.sh` and `scripts/test-installers.ps1`, which run both installers against a real temporary destination. An installer that is never run is not tested, and reading one does not reveal that its output cannot be captured.
 

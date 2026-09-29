@@ -81,6 +81,9 @@ before opening a pull request, or push to the branch and let Actions report.
 
 The gate itself is `scripts/validate-blueprint.sh`, not inline in the workflow. Run it
 locally with `bash scripts/validate-blueprint.sh`; it needs no Actions, no Node and no
-network. `ci.yml` and the reusable workflow both call that one file, so a change to the
-gate is made once. The installers have their own suites, `scripts/test-installers.sh` and
+network. `ci.yml` calls that one file, so a change to the gate is made once. The reusable
+workflow for consumers does *not* call it and cannot: it validates a consuming repository,
+`scripts/` is never installed into one, and a consumer has no such file to run. It carries
+its own small structural floor instead. The installers have their own suites,
+`scripts/test-installers.sh` and
 `scripts/test-installers.ps1`, which run both installers against a real destination.

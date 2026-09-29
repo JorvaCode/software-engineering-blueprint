@@ -59,17 +59,33 @@ La version es `1.1.0-dev` mientras el CHANGELOG tenga trabajo sin publicar, y pa
 porque el arbol ya no es lo que se publico como `1.0.0`, y un numero que miente es peor
 que un numero con sufijo.
 
-**3. Una sola implementacion de la validacion.** El gate se mueve a
-`scripts/validate-blueprint.sh`. `ci.yml` lo ejecuta, y el workflow reutilizable lo
-ejecuta. La validacion ya no esta escrita dos veces, y —esto es la parte que importa—
-ahora se puede ejecutar en local sin Actions, que es como se desarrollo esto mismo: cada
-gate nuevo se comprueba por mutacion antes de commitearse.
+**3. El gate sale del workflow.** El gate se mueve a `scripts/validate-blueprint.sh`,
+que `ci.yml` ejecuta. Antes vivia escrito dentro de `ci.yml`, de modo que cada
+comprobacion nueva habia que reescribirla a mano para probarla en local. Ahora se
+ejecuta en local sin Actions, que es como se desarrollo esto mismo: cada gate
+nuevo se comprueba por mutacion antes de commitearse.
 
-El workflow reutilizable se redefine con el suelo estructural que un consumidor
-necesita de verdad: los directorios instalados existen, las catorce fases existen y declaran
-sus information items, y el manifiesto de adopcion registra una version. Las comprobaciones
-que solo tienen sentido aqui —ADR, gobernanza, el `VERSION` de este repositorio, el
-adaptador propio— quedan fuera, porque un consumidor no es este repositorio.
+**El workflow reutilizable no ejecuta este script, y no puede.** La
+documentacion de M11 afirmaba que tambien lo ejecutaba, y era falso. La razon es
+estructural, no una omision: el gate valida *este* repositorio, y los instaladores
+no copian `scripts/` a ningun consumidor, de modo que un proyecto consumidor no
+tiene ese fichero que ejecutar. Compartirlo exigiria enviar el gate de
+mantenimiento del repositorio a cada consumidor y anadir `scripts/` a la
+allowlist que este mismo ADR define para excluirlo. El workflow reutilizable
+declara entonces su propio suelo estructural, que es lo que un consumidor
+necesita de verdad: los directorios instalados existen, las quince fases
+existen, cada fase de proceso declara sus information items, y el manifiesto de
+adopcion registra una version. Las comprobaciones que solo tienen sentido aqui
+—ADR, gobernanza, el `VERSION` de este repositorio, los enlaces de esta prosa—
+quedan fuera, porque un consumidor no es este repositorio.
+
+Esa segunda implementacion es un coste asumido y declarado, no un descuido: son
+dos y van a divergir. Lo que evita que diverjan hacia una afirmacion falsa es que
+`scripts/validate-blueprint.sh` comprueba que el workflow reutilizable no invoque
+el script. La prosa no se comprueba, porque una frase no es un hecho: la
+afirmacion falsa original ponia el sujeto en una frase y la asercion en la
+siguiente, y ningun regex sobre frases la detecta sin disparar tambien contra la
+correccion que dice lo contrario.
 
 **4. La comprobacion de enlaces cubre referencias y anclas.** El validador anterior solo
 miraba enlaces en linea. Una referencia definida con `[texto][ref]` y sin
@@ -155,8 +171,8 @@ mutando el validador, no solo leyendolos. Las pruebas de los instaladores viven
 en `scripts/test-installers.sh` y `scripts/test-installers.ps1` y se ejecutan en
 CI, porque un script de instalacion que nadie ejecuta no es un script probado.
 
-Cinco defectos aparecieron al ejecutar en vez de leer, y ninguno era visible en
-el codigo:
+Siete defectos aparecieron al ejecutar en vez de leer, y ninguno era visible en el
+codigo:
 
 - El instalador de PowerShell usaba `Write-Host`, que escribe al host pasando
   por alto el flujo de exito. `$out = & .\blueprint-init.ps1 C:\x` devolvia
@@ -185,9 +201,35 @@ el codigo:
   su sobrecarga en Windows PowerShell: devolvia `True` sobre un archivo que
   empezaba por `7b 0a`. El instalador escribia correctamente sin BOM; la
   comprobacion ahora mira los bytes.
+- La documentacion afirmaba una cosa que el codigo hacia imposible. Decia, en el
+  README, el CHANGELOG, el AGENTS y este ADR, que el workflow reutilizable
+  ejecutaba `scripts/validate-blueprint.sh`, y por tanto que habia «una
+  implementacion, tres ejecutores». No lo ejecutaba, y no podia: la allowlist de
+  este mismo ADR excluye `scripts/`, asi que un consumidor no tiene el fichero.
+  Ninguno de los dos lados estaba mal por si solo —el workflow es correcto, la
+  documentacion es que exagera— y ninguno se delata leyendo solo uno de los dos.
+  La contradiccion era ademas autoinformante: el CHANGELOG decia que el workflow
+  se habia puesto a ejecutar el script para no duplicar el gate, y lo unico que
+  hacia era duplicarlo. Esto lo apareció leer la documentacion contra la decision
+  de allowlist, que es un cruzamiento que ninguna de las dos mitades hace consigo
+  misma. Un gate que hubiera unsatisfactory aqui: el validador comprueba que el
+  workflow no *invoque* el script, y no puede comprobar que la prosa no lo
+  *afirme*, porque la frase original partia el sujeto y la asercion en dos
+  frases y la correccion que dice lo contrario dispararia cualquier regex igual.
+  Se corrige la prosa y se cubre el comportamiento, y se deja constancia de que
+  la prosa no esta cubierta.
+- El ejemplo de uso del workflow reutilizable fijaba `@v1.0.0`, que es la
+  etiqueta anterior a este trabajo: un consumidor que lo siguiera al pie de la
+  letra recibia los tres `test -d` originales. El pin por etiqueta es el
+  correcto, porque un gate que se mueve solo no es un gate, pero un ejemplo que
+  instala un gate mas debil del que el repositorio cree tener es peor que no
+  documentarlo. El comentario de uso lo dice y el suelo nuevo viaja en la
+  siguiente etiqueta.
 
-Se deja constancia de los cinco porque son la clase de defecto que aparece al
+Se deja constancia de los siete porque son la clase de defecto que aparece al
 ejecutar y no al leer, y porque el primero habria sido facil de declarar
 «funciona» sin haberlo intentado nunca. Dos de ellos —el `Write-Host` y la
 allowlist mal comprobada— eran la razon entera de este ADR, y ninguno se habria
-encontrado leyendo el codigo.
+encontrado leyendo el codigo. El sexto no es de ejecucion sino de
+contradiccion: aparecio al poner la documentacion delante de la decision que
+dice lo contrario, que es la unica forma de que aparezca.

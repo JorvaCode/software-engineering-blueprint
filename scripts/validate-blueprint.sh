@@ -141,6 +141,23 @@ for i in scripts/blueprint-init.sh scripts/blueprint-init.ps1; do
   fi
 done
 
+# The reusable workflow is a second implementation, deliberately, and the docs
+# say so. What it must never be is a claim to be this gate: a consuming
+# repository has no scripts/ directory, because the installers exclude it, so a
+# step calling this file there fails for every consumer. Comments may discuss the
+# relationship; executable lines may not.
+#
+# Only the executable form is checked. Prose is not, because a phrase is not a
+# fact: the false claim this replaced ("it runs in the reusable workflow") put
+# the subject in one sentence and the assertion in the next, and no regex over
+# sentences catches that without also firing on the correction that says the
+# opposite. Review the wording; check the behaviour here.
+echo "== Reusable workflow stays self-contained =="
+RW=.github/workflows/reusable-blueprint-validation.yml
+if [ -f "$RW" ] && grep -vn '^[[:space:]]*#' "$RW" | grep -q 'scripts/validate-blueprint\.sh'; then
+  fail "${RW} executes scripts/validate-blueprint.sh, which no consumer has"
+fi
+
 # Documentation that describes the installers has to describe the installers that
 # exist. A consumer who reads the adoption checklist is entitled to the behaviour
 # the installers actually have, and the checklist drifts silently otherwise.
