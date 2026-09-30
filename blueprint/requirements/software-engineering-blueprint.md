@@ -61,6 +61,14 @@ Stated here rather than left for a consumer to discover:
 - **Tooling that enforces traceability.** The chain between requirement, test and release is
   declared and review-enforced. `standards/information-items.md` and `ADR-013` state why no
   automatic completeness check exists.
+- **A commit SHA for `actions/checkout`.** The action is pinned to the `v5` major tag, so a new
+  minor release can change what the gate does without a change in this repository. An exact SHA
+  is the stronger posture, and it is not used here because this repository cannot verify one
+  without network access, and a wrong SHA breaks CI for every contributor at once with no local
+  signal. `.github/dependabot.yml` proposes the bump monthly so the review is scheduled.
+- **Automated bumps for markdownlint-cli.** `npx markdownlint-cli@0.49.1` is exact, but Dependabot's
+  npm integration reads a `package.json` and a lockfile, and this repository has neither on
+  purpose: running the gate must not require a Node toolchain. That pin is reviewed by hand.
 
 ## Functional requirements
 
@@ -85,6 +93,9 @@ Stated here rather than left for a consumer to discover:
 | FR-17 | This repository's own gate is one script, runnable locally with no Node, no Python and no network. | `bash scripts/validate-blueprint.sh` succeeds on a checkout with those tools absent, and `ci.yml` invokes that same file. | `scripts/validate-blueprint.sh`, `.github/workflows/ci.yml` |
 | FR-18 | The reusable workflow validates a consuming repository, and is not this repository's gate. | `reusable-blueprint-validation.yml` contains no reference to `scripts/validate-blueprint.sh`, and `validate-blueprint.sh` fails if it does. | `.github/workflows/reusable-blueprint-validation.yml` |
 | FR-19 | A requirement, the change that realises it, the criterion that verifies it and the release that delivered it are named by identifier. | Each register row names its realisation, phase `05` requires the identifier on the implementation, and phase `11` requires it on the release record. | `standards/information-items.md`, `blueprint/architecture/adr/adr-013-trazabilidad-de-extremo-a-extremo.md` |
+| FR-20 | Line endings are pinned, so the gate produces the same verdict on a Windows checkout as on a Linux one. | `.gitattributes` pins `*.sh`, `*.md` and `*.yml` to LF, and the gate fails on a CR in any of them, naming the file. | `.gitattributes`, `scripts/validate-blueprint.sh` |
+| FR-21 | A CI run is bounded in time, and a run superseded by a newer commit is cancelled rather than queued. | Every job in both workflows declares `timeout-minutes`, and both workflows declare a `concurrency` group. | `.github/workflows/ci.yml`, `.github/workflows/reusable-blueprint-validation.yml` |
+| FR-22 | The documented example for the reusable workflow pins a reference that actually carries the checks it describes. | The example in the header comment does not use `@v1.0.0`, and the comment states which input is not pinned exactly. | `.github/workflows/reusable-blueprint-validation.yml` |
 
 ## Non-functional requirements
 
@@ -115,6 +126,8 @@ Stated here rather than left for a consumer to discover:
 | AC-08 | FR-14, FR-16 | An installer run against a consumer produces the declared files, both licences, and a manifest recording exactly those entries. | `bash scripts/test-installers.sh` and `pwsh scripts/test-installers.ps1` pass. |
 | AC-09 | FR-19, NFR-08 | Given a named requirement, a reviewer can name the release that delivered it and the check that verified it, using only the release record and the criterion coverage. | Reading `blueprint/11-continuous-delivery.md` and `blueprint/06-testing.md` against the change under review. |
 | AC-10 | NFR-10 | A limitation this repository declares about itself is either true in the artifact that states it, or removed from it. | `validate-blueprint.sh` checks each declared limitation against the text that states it. |
+| AC-11 | FR-20 | On a checkout with `core.autocrlf=true`, the gate reaches the same verdict it reaches with LF, and a CR in a tracked text file is reported as a line-ending fault naming that file. | `bash scripts/validate-blueprint.sh` on a CRLF checkout; the mutation suite converts a phase document to CRLF and asserts the gate fails on that file. |
+| AC-12 | FR-21, FR-22 | No CI job can run unbounded, a superseded run is cancelled, and the reusable workflow's documented example pins a reference that carries the checks it describes. | `validate-blueprint.sh` fails if a job loses `timeout-minutes`, if either workflow loses `concurrency`, or if the example reintroduces `@v1.0.0`. |
 
 ## Traceability
 This register is the root of the chain, and each row names where its requirement goes. The
@@ -139,17 +152,21 @@ delivering release is declared here rather than allowed to lapse.
 | `v1.0.0` | FR-01 … FR-08, NFR-01 … NFR-07 |
 
 Requirements not listed against a release are in development or declared as not provided. That
-includes FR-09 … FR-19 and NFR-08 … NFR-10, which are delivered by the unreleased `1.1.0-dev`.
+includes FR-09 … FR-22 and NFR-08 … NFR-10, which are delivered by the unreleased `1.1.0-dev`.
 
 ## Dependencies
 - Git and GitHub (or an equivalent platform) for branching, pull requests and CI execution; the
   workflows are examples, not hard requirements.
 - A Markdown-capable editor or CI tool for producing and validating the documentation artifacts.
-- A POSIX shell for the repository's own gate. A consumer's gate, the reusable workflow, carries
-  its own smaller structural floor and does not need this one.
+- **Bash, not a POSIX shell, for this repository's own gate.** It uses `seq -w`, `compgen` and
+  process substitution, none of which POSIX requires; the shebang says `bash` and the claim used
+  to say otherwise. The reusable workflow carries its own smaller structural floor and declares
+  `shell: bash` for the same reason.
 - OpenCode, only when the optional skills adapter is used (a runtime dependency of the skills,
   not of the blueprint itself).
 - No build toolchain, package manager or runtime is required to use the blueprint process.
+- `actions/checkout`, pinned to the `v5` major tag, is the gate's only third-party runtime input
+  and the one input that is not pinned exactly. See `## Not provided`.
 
 ## Risks / assumptions
 - **Risk:** The blueprint becomes documentation-heavy without measurable adoption. **Mitigation:**
@@ -173,7 +190,7 @@ includes FR-09 … FR-19 and NFR-08 … NFR-10, which are delivered by the unrel
 
 This register changes in the same change that alters what the repository is held to, and never
 alone in a housekeeping commit. A change that adds, removes or revises an entry states which of
-FR-01 … FR-19 it is answerable to, because a requirement that exists for no reason is not a
+FR-01 … FR-22 it is answerable to, because a requirement that exists for no reason is not a
 requirement.
 
 An identifier is never reused. A requirement that changes meaning keeps its identifier and gains

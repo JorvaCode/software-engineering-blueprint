@@ -44,6 +44,41 @@ check_dir .opencode/skills
 check_dir .opencode/agents
 check_dir .github/workflows
 
+echo "== Line endings cannot silently break the checks below (see FR-20) =="
+# This runs first, before anything else parses a document, because it is the
+# only fault that makes every later result untrustworthy. The gate decides a
+# phase with `grep -qx '## Information items'`, which matches a whole line. A
+# contributor on Windows with core.autocrlf=true — the Git for Windows default,
+# and a local setting this repository cannot ship — gets CRLF, and then all
+# fourteen phases fail at once for a reason that has nothing to do with the
+# phase. Placed at the end, this check would be correct and useless: the reader
+# would have read three false violations before reaching the real cause.
+#
+# core.autocrlf is not reachable from here, so the guarantee is a file that
+# reaches the checkout (.gitattributes) plus this check, which names the cause
+# instead of reporting its symptom fourteen times.
+if [ ! -f .gitattributes ]; then
+  fail "missing .gitattributes; a CRLF checkout makes this gate report fourteen false failures"
+fi
+# The rules the checks below depend on. *.ps1 is deliberately the other way
+# round, and is asserted too rather than left to the default.
+for rule in '^\* text=auto eol=lf' '^\*\.sh +text eol=lf' '^\*\.md +text eol=lf' '^\*\.yml +text eol=lf'; do
+  if ! grep -qE "$rule" .gitattributes; then
+    fail ".gitattributes is missing the rule ${rule#^}"
+  fi
+done
+if ! grep -qE '^\*\.ps1 +text eol=crlf' .gitattributes; then
+  fail ".gitattributes must pin *.ps1 to CRLF, which is what PowerShell tooling writes"
+fi
+# Restricted to the extensions this gate parses and that .gitattributes pins to
+# LF, because a CR in a .ps1 is correct rather than a fault.
+crlf=$(find . \( -name '*.sh' -o -name '*.md' -o -name '*.yml' \) -type f \
+  -not -path './.git/*' -not -path './.opencode/node_modules/*' -not -name '.gitattributes' \
+  -exec grep -lIU $'\r' {} + 2>/dev/null)
+if [ -n "$crlf" ]; then
+  fail "CRLF line endings in files this gate parses: $(echo "$crlf" | tr '\n' ' ') (see FR-20; run 'git add --renormalize .')"
+fi
+
 echo "== Distribution identity (see ADR-011) =="
 check_file VERSION
 # A version file with no content identifies nothing.
@@ -574,6 +609,94 @@ grep -qE '^\| Criterion \| Level \| Check that verifies it \|' templates/change.
 # has to be able to say so, or the field becomes an invention obligation.
 grep -q 'satisfies none' templates/change.md \
   || fail "templates/change.md must allow a change that satisfies no requirement to say so"
+
+echo "== CI runs are bounded and superseded runs are cancelled (see FR-21) =="
+# A job with no timeout holds its concurrency slot for the six hours GitHub
+# allows. And without a concurrency group, a push to a branch with an open pull
+# request queues a second full run, so a reviewer reads the verdict of a commit
+# that is no longer the head.
+for wf in .github/workflows/ci.yml .github/workflows/reusable-blueprint-validation.yml; do
+  if ! grep -q '^concurrency:' "$wf"; then
+    fail "$wf declares no concurrency group; superseded runs queue instead of cancelling"
+  fi
+  # Count jobs by parsing the jobs: block, not by counting two-space keys. A
+  # trigger such as `  push:` is indented exactly like a job, so the first
+  # version of this check reported four jobs for a three-job workflow and
+  # compared a timeout count against a number that was never a job count.
+  jobs=$(awk '
+    /^jobs:/                 { injobs = 1; next }
+    /^[A-Za-z]/              { injobs = 0 }
+    injobs && /^  [A-Za-z0-9_-]+:[[:space:]]*$/ { c++ }
+    END                      { print c + 0 }
+  ' "$wf")
+  bounds=$(awk '
+    /^jobs:/                 { injobs = 1; next }
+    /^[A-Za-z]/              { injobs = 0 }
+    injobs && /^    timeout-minutes: [0-9]+[[:space:]]*$/ { c++ }
+    END                      { print c + 0 }
+  ' "$wf")
+  if [ "$jobs" -eq 0 ]; then
+    fail "$wf declares no jobs, so the job parse found nothing to bound"
+  fi
+  if [ "$bounds" -lt "$jobs" ]; then
+    fail "$wf declares $bounds timeout-minutes for $jobs jobs; every job needs a bound"
+  fi
+done
+
+echo "== The documented example pins something that works (see FR-22) =="
+# The header comment contradicted itself: it told the consumer to pin a tag and
+# never a branch, then told them to pin the branch, and its example used the
+# one tag that does not carry the checks the file describes. All three mutations
+# below are regressions of that contradiction.
+RW=.github/workflows/reusable-blueprint-validation.yml
+if grep -q 'Pin a tag, never a branch' "$RW"; then
+  fail "$RW still claims a tag is the only valid pin, which the comment below it contradicts"
+fi
+if grep -qE 'uses: .*reusable-blueprint-validation\.yml@v1\.0\.0' "$RW"; then
+  fail "$RW documents an example that pins v1.0.0, which does not carry the floor it describes"
+fi
+# The honest statement has to name the tradeoff, or the example looks arbitrary.
+for claim in 'Pin the branch' 're-pin to a tag'; do
+  if ! grep -q "$claim" "$RW"; then
+    fail "$RW must state '$claim' so the example is not arbitrary"
+  fi
+done
+
+echo "== Third-party pins are declared, not assumed (see 'Not provided') =="
+# dependabot cannot cover the npm pin: it reads a package.json and this
+# repository has none on purpose. What is checked is that the gap is declared,
+# because an npm entry that silently opens no pull requests is a check that
+# looks present and is not.
+if [ ! -f .github/dependabot.yml ]; then
+  fail "missing .github/dependabot.yml; a pinned action goes stale with nothing proposing the bump"
+fi
+if ! grep -q 'package-ecosystem: github-actions' .github/dependabot.yml; then
+  fail ".github/dependabot.yml does not cover the actions the gate uses"
+fi
+if ! grep -q 'package-ecosystem: npm' .github/dependabot.yml; then
+  # Correct, and the reason has to be written down where a reader looks.
+  if ! grep -q 'package.json' blueprint/requirements/software-engineering-blueprint.md; then
+    fail "dependabot omits npm, so the reason it is omitted must be declared in the register"
+  fi
+fi
+# The checkout action is the one input that is not pinned exactly. The gate
+# refuses to say "pinned" about it, because that is a claim the file cannot
+# support.
+if ! grep -q 'actions/checkout@v5' .github/workflows/ci.yml; then
+  fail "ci.yml no longer pins actions/checkout to the major tag its comment describes"
+fi
+if ! grep -q 'major tag, not to a commit SHA' .github/workflows/ci.yml; then
+  fail "ci.yml must declare that the checkout pin is a major tag and not an exact SHA"
+fi
+# The register claimed a POSIX shell. It uses seq -w, compgen and process
+# substitution, so that was false, and a false dependency is worse than a
+# demanding one.
+if grep -qi 'A POSIX shell for the repository' blueprint/requirements/software-engineering-blueprint.md; then
+  fail "the register still claims the gate needs a POSIX shell; it needs bash"
+fi
+if ! grep -q 'Bash, not a POSIX shell' blueprint/requirements/software-engineering-blueprint.md; then
+  fail "the register must state the real shell dependency of the gate"
+fi
 
 echo "== Quality attribute scenarios are wired into the phases that consume them =="
 # The six fields are what make a scenario falsifiable. A scenario that

@@ -1,0 +1,40 @@
+# Line endings are load-bearing in this repository, not cosmetic.
+#
+# The gate is a bash script, and it decides every phase document with
+# `grep -qx '## Information items'`, which matches a whole line. A contributor
+# on Windows with core.autocrlf=true — the Git for Windows default — checks
+# these files out with CRLF, that grep then fails on all fourteen phases at
+# once, and the gate reports fourteen false violations instead of one real
+# problem. A gate that cannot tell a line-ending problem from a content problem
+# is worse than no gate.
+#
+# core.autocrlf is a local setting. This repository cannot ship it, so this file
+# is the only thing that reaches the contributor's checkout.
+
+* text=auto eol=lf
+
+# Bash reads a CRLF shebang as "bash\r" and the kernel answers "bad
+# interpreter", so these are pinned unconditionally rather than left to the
+# default above.
+*.sh    text eol=lf
+*.bash  text eol=lf
+
+# PowerShell accepts either ending, and CRLF is what its own tooling writes.
+# This is a preference, not a correctness rule, and it is listed so that a
+# change to the default above cannot silently reclassify these.
+*.ps1   text eol=crlf
+*.psm1  text eol=crlf
+*.psd1  text eol=crlf
+
+# The Windows command processor is the one case that genuinely needs CRLF.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# Named explicitly because the gate's decisions depend on them, so they must not
+# be left to whatever "auto" decides.
+*.md          text eol=lf
+*.yml         text eol=lf
+*.yaml        text eol=lf
+LICENSE       text eol=lf
+LICENSE-CODE  text eol=lf
+VERSION       text eol=lf
