@@ -3,6 +3,11 @@
 ## Status
 Accepted
 
+> **Nota de resolución.** El compromiso de «Negative / trade-offs» de este ADR fue resolver la
+> trazabilidad entre fases en un mecanismo distinto, con un coste distinto. Ese mecanismo existe
+> y es `ADR-013`. Este registro se conserva tal como se tomó: la limitación que se declara abajo
+> era cierta cuando se decidió y `git log` es la evidencia de que lo era.
+
 ## Context
 Ámbito: `blueprint/00-principles.md` … `blueprint/14-continuous-improvement.md`.
 

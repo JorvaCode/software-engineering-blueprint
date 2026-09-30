@@ -317,7 +317,8 @@ for a in \
   adr-009-information-items-por-fase.md \
   adr-010-vistas-y-escenarios-de-atributo-de-calidad.md \
   adr-011-distribucion-versionada-y-manifiesto.md \
-  adr-012-licencia-del-codigo-y-distribucion-de-licencias.md; do
+  adr-012-licencia-del-codigo-y-distribucion-de-licencias.md \
+  adr-013-trazabilidad-de-extremo-a-extremo.md; do
   check_file "blueprint/architecture/adr/${a}"
 done
 
@@ -456,11 +457,123 @@ done
 if ! grep -q 'Information Items' standards/information-items.md; then
   fail "standards/information-items.md does not define the required section"
 fi
-# The known limitation is only honest if it is stated in the artifact
-# that carries the limitation, not just in the ADR.
-if ! grep -q 'not yet make the phases checkable against each other' standards/information-items.md; then
-  fail "standards/information-items.md must state the traceability limitation it does not solve"
+# The residual limitation is only honest if it is stated in the artifact that
+# carries it, and it is no longer the one ADR-009 recorded. The previous check
+# required the sentence "not yet make the phases checkable against each other"
+# to be present, which made it impossible to fix the limitation: the gate
+# failed the moment it stopped being true.
+if grep -q 'not yet make the phases checkable against each other' standards/information-items.md; then
+  fail "standards/information-items.md still declares traceability unresolved; ADR-013 resolves it"
 fi
+# Replacing it with silence would be worse than the stale claim, so the
+# residual limit has to be named: the rule is review-enforced, not tool-checked.
+if ! grep -q 'enforced by review' standards/information-items.md; then
+  fail "standards/information-items.md must state that traceability is review-enforced, not tool-checked"
+fi
+
+echo "== The traceability chain is closed from requirement to release =="
+# ADR-013 closes the limitation ADR-009 recorded, and it does so with a field
+# on items that already exist rather than a new artifact. That decision is only
+# real if each end of the chain names the identifier, so the check below is the
+# chain and not the prose around it. A phase that drops its half leaves the
+# requirement unreachable from the release, which is the exact defect F13 found.
+if ! grep -qx '## Traceability' standards/information-items.md; then
+  fail "standards/information-items.md must declare the '## Traceability' section"
+fi
+# The three statements that make the chain usable. The delivery endpoint is
+# the one that was missing entirely, so it is checked by name in phase 11
+# rather than by counting occurrences.
+for anchor in \
+  'blueprint/11-continuous-delivery.md:Release record.*requirements and changes it delivers' \
+  'blueprint/01-requirements.md:AC-nn' \
+  'blueprint/05-implementation.md:FR-nn' \
+  'blueprint/06-testing.md:criterion coverage' \
+  'blueprint/14-continuous-improvement.md:FR-nn' ; do
+  doc=${anchor%%:*}; pattern=${anchor#*:}
+  if ! grep -qiE "$pattern" "$doc"; then
+    fail "traceability anchor missing: ${doc} does not name '${pattern}'"
+  fi
+done
+# Phase 04 already required the design to name its requirement. The chain
+# only holds if that link is still there, so its absence is a regression.
+if ! grep -q 'requirement it satisfies' blueprint/04-design.md; then
+  fail "blueprint/04-design.md lost the requirement link; the chain starts at design"
+fi
+
+echo "== The requirements register is living and checkable =="
+REG=blueprint/requirements/software-engineering-blueprint.md
+# The defect this phase fixes is that the register described v1.0.0 while
+# VERSION said 1.1.0-dev. Banning the string "v1.0.0" would be wrong: the
+# delivery table has to name the release that shipped FR-01..FR-08. So the
+# check is the cross-reference instead, and it fails the moment someone bumps
+# VERSION and forgets the register, which is the staleness itself.
+if [ ! -f "$REG" ]; then
+  fail "missing the requirements register: $REG"
+else
+  if ! grep -qF "$(tr -d '[:space:]' < VERSION)" "$REG"; then
+    fail "$REG does not name the current VERSION; a living register tracks what the repository is held to"
+  fi
+  # Every requirement has to carry its verification and the artifact that
+  # realises it, per standards/information-items.md. A row missing either is
+  # the failure mode the Definition of Done already describes: prose that
+  # sounds checkable and names no check.
+  awk -v doc="$REG" '
+    /^\| (FR|NFR|AC)-[0-9]+ \|/ {
+      row = $0
+      n = split(row, cell, "|")
+      # Leading and trailing pipes give two empty fields; a 4-column row
+      # therefore splits into 6.
+      if (n != 6) { print "FAIL: " doc ": " cell[2] " has " (n - 2) " columns, expected 4"; bad = 1; next }
+      for (i = 2; i <= 5; i++) {
+        gsub(/^[ \t]+|[ \t]+$/, "", cell[i])
+        if (cell[i] == "") { print "FAIL: " doc ": " cell[2] " has an empty column " (i - 1); bad = 1 }
+      }
+    }
+    END { exit bad ? 1 : 0 }
+  ' "$REG" || failed=1
+  # An identifier reused for a different requirement breaks every link that
+  # names it, so a duplicate is a defect and not a formatting issue.
+  dups=$(grep -oE '^\| (FR|NFR|AC)-[0-9]+' "$REG" | sort | uniq -d)
+  if [ -n "$dups" ]; then
+    fail "$REG reuses a requirement identifier: $(echo "$dups" | tr '\n' ' ')"
+  fi
+  # The register is living, so it has to say how it is maintained. Without
+  # the rule the document decays into exactly the frozen snapshot it replaced.
+  # Headings are anchored: a substring match would accept a mention of the
+  # word inside a sentence and call the section present.
+  for heading in '^## Maintenance' '^## Traceability' '^## Delivery' '^### Not provided'; do
+    if ! grep -qE "$heading" "$REG"; then
+      fail "$REG is missing the section ${heading#^}"
+    fi
+  done
+fi
+
+echo "== The templates carry the fields the standards already require =="
+# The templates were thinner than the standards governing them: requirement.md
+# omitted the verification method the Definition of Done demands, and change.md
+# omitted the pattern justification ADR-006 requires. Each field below is
+# checked by the heading that introduces it, not by a word that could appear
+# in the surrounding prose.
+grep -qx '## Traceability' templates/requirement.md \
+  || fail "templates/requirement.md must declare a '## Traceability' section"
+grep -qE '^\| ID \| Requirement \| Verification \|' templates/requirement.md \
+  || fail "templates/requirement.md must require a Verification column per requirement"
+grep -q 'AC-nn' templates/requirement.md \
+  || fail "templates/requirement.md must number acceptance criteria as AC-nn"
+grep -q 'quality attribute' templates/requirement.md \
+  || fail "templates/requirement.md must require the quality attribute on an NFR"
+grep -qx '### Patterns' templates/change.md \
+  || fail "templates/change.md must declare a '### Patterns' section"
+grep -qx '### ADR' templates/change.md \
+  || fail "templates/change.md must declare a '### ADR' section"
+grep -qx '## Deletions' templates/change.md \
+  || fail "templates/change.md must declare a '## Deletions' section"
+grep -qE '^\| Criterion \| Level \| Check that verifies it \|' templates/change.md \
+  || fail "templates/change.md must require the check that verifies each criterion"
+# change.md records the identifier, but a change that satisfies no requirement
+# has to be able to say so, or the field becomes an invention obligation.
+grep -q 'satisfies none' templates/change.md \
+  || fail "templates/change.md must allow a change that satisfies no requirement to say so"
 
 echo "== Quality attribute scenarios are wired into the phases that consume them =="
 # The six fields are what make a scenario falsifiable. A scenario that
