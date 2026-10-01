@@ -154,9 +154,11 @@ delivering release is declared here rather than allowed to lapse.
 | Released in | Requirements delivered |
 | --- | --- |
 | `v1.0.0` | FR-01 … FR-08, NFR-01 … NFR-07 |
+| `v1.1.0` | FR-09 … FR-25, NFR-08 … NFR-10 |
 
-Requirements not listed against a release are in development or declared as not provided. That
-includes FR-09 … FR-25 and NFR-08 … NFR-10, which are delivered by the unreleased `1.1.0-dev`.
+Every requirement in this register is delivered by a release. A requirement added after this
+table was last updated is in development until the release that carries it names it here; it is
+not left to lapse.
 
 ## Dependencies
 - Git and GitHub (or an equivalent platform) for branching, pull requests and CI execution; the
