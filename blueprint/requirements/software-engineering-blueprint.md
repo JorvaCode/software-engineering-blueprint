@@ -83,11 +83,11 @@ Stated here rather than left for a consumer to discover:
 | FR-07 | Adoption guidance and a checklist exist for new projects and teams. | `examples/adoption-checklist.md` exists and references at least one artifact per phase. | `examples/adoption-checklist.md`, `README.md` |
 | FR-08 | The repository declares its own version and release status. | `VERSION` parses, `CHANGELOG.md` carries a section for it, and the two agree. | `VERSION`, `CHANGELOG.md` |
 | FR-09 | Every phase declares what its artifacts contain, so a third party can decide sufficiency without the author. | `validate-blueprint.sh` fails if a phase output does not state its content. | `standards/information-items.md`, `blueprint/architecture/adr/adr-009-information-items-por-fase.md` |
-| FR-10 | Where a quality attribute matters, the architecture produces a scenario with stimulus, environment, artifact, response, response measure and assumption. | A scenario in an architecture document carries all six fields; `validate-blueprint.sh` checks the section exists where the phase declares it. | `blueprint/03-architecture.md`, `blueprint/architecture/adr/adr-010-escenarios-de-atributos-de-calidad.md` |
+| FR-10 | Where a quality attribute matters, the architecture produces a scenario with source, stimulus, environment, artifact, response and response measure. | A scenario in an architecture document carries all six fields; `validate-blueprint.sh` checks the section exists where the phase declares it. | `blueprint/03-architecture.md`, `blueprint/architecture/adr/adr-010-vistas-y-escenarios-de-atributo-de-calidad.md` |
 | FR-11 | The test strategy is derived from the quality attribute scenarios, and each response measure is either verified by a check or declared unverified. | Phase `04` and phase `06` declare the derivation and the coverage; `validate-blueprint.sh` checks both sections exist. | `blueprint/04-design.md`, `blueprint/06-testing.md` |
-| FR-12 | Normative text declares its modality, and a quality gate names artifact, criterion and evidence. | `validate-blueprint.sh` rejects a gate containing an unfalsifiable question and fails if `standards/normative-language.md` is missing. | `standards/normative-language.md`, `blueprint/architecture/adr/adr-008-modalidad-y-criterios-falsables.md` |
+| FR-12 | Normative text declares its modality, and a quality gate names artifact, criterion and evidence. | `validate-blueprint.sh` rejects a gate containing an unfalsifiable question and fails if `standards/normative-language.md` is missing. | `standards/normative-language.md`, `blueprint/architecture/adr/adr-008-terminologia-y-modalidad-normativa.md` |
 | FR-13 | A significant architectural decision is recorded as an ADR following a template. | `validate-blueprint.sh` fails if an ADR lacks a status, options, decision or date. | `templates/adr.md`, `blueprint/architecture/adr/` |
-| FR-14 | Distribution is by allowlist, and the installers record what a consumer actually adopted. | Running an installer produces `.blueprint-install.json` whose recorded entries match the files the destination received. | `scripts/blueprint-init.sh`, `scripts/blueprint-init.ps1`, `blueprint/architecture/adr/adr-011-distribucion-por-allowlist-y-manifiesto.md` |
+| FR-14 | Distribution is by allowlist, and the installers record what a consumer actually adopted. | Running an installer produces `.blueprint-install.json` whose recorded entries match the files the destination received. | `scripts/blueprint-init.sh`, `scripts/blueprint-init.ps1`, `blueprint/architecture/adr/adr-011-distribucion-versionada-y-manifiesto.md` |
 | FR-15 | The governance set exists and carries no placeholder owner. | `validate-blueprint.sh` fails on a `TODO(owner)` in a governance file, and checks each governance file exists. | `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `blueprint/architecture/adr/adr-007-licencia-y-gobernanza-del-repositorio.md` |
 | FR-16 | Documentation and code are licensed separately, and both licences reach the consumer. | `LICENSE` and `LICENSE-CODE` both exist with the expected SPDX identifiers, and an installer run against an empty destination produces both. | `LICENSE`, `LICENSE-CODE`, `blueprint/architecture/adr/adr-012-licencia-del-codigo-y-distribucion-de-licencias.md` |
 | FR-17 | This repository's own gate is one script, runnable locally with no Node, no Python and no network. | `bash scripts/validate-blueprint.sh` succeeds on a checkout with those tools absent, and `ci.yml` invokes that same file. | `scripts/validate-blueprint.sh`, `.github/workflows/ci.yml` |
@@ -96,6 +96,9 @@ Stated here rather than left for a consumer to discover:
 | FR-20 | Line endings are pinned, so the gate produces the same verdict on a Windows checkout as on a Linux one. | `.gitattributes` pins `*.sh`, `*.md` and `*.yml` to LF, and the gate fails on a CR in any of them, naming the file. | `.gitattributes`, `scripts/validate-blueprint.sh` |
 | FR-21 | A CI run is bounded in time, and a run superseded by a newer commit is cancelled rather than queued. | Every job in both workflows declares `timeout-minutes`, and both workflows declare a `concurrency` group. | `.github/workflows/ci.yml`, `.github/workflows/reusable-blueprint-validation.yml` |
 | FR-22 | The documented example for the reusable workflow pins a reference that actually carries the checks it describes. | The example in the header comment does not use `@v1.0.0`, and the comment states which input is not pinned exactly. | `.github/workflows/reusable-blueprint-validation.yml` |
+| FR-23 | The language of each class of document is declared, so a contributor does not have to infer it from the existing files. | `CONTRIBUTING.md` states that normative content is English and decision records are in the maintainer's language, and `validate-blueprint.sh` fails if that declaration is removed. | `CONTRIBUTING.md`, `scripts/validate-blueprint.sh` |
+| FR-24 | A reference to a document written in prose resolves to a file that exists. | `validate-blueprint.sh` fails when a backticked reference to an ADR, a phase document or a standard does not resolve to a file. | `scripts/validate-blueprint.sh` |
+| FR-25 | The git standard states falsifiable rules, and the accepted commit types are declared in exactly one place. | `standards/git.md` carries a quality gate and the type list, the gate checks both, and `CONTRIBUTING.md` points at it instead of restating a list. | `standards/git.md`, `CONTRIBUTING.md`, `scripts/validate-blueprint.sh` |
 
 ## Non-functional requirements
 
@@ -128,6 +131,7 @@ Stated here rather than left for a consumer to discover:
 | AC-10 | NFR-10 | A limitation this repository declares about itself is either true in the artifact that states it, or removed from it. | `validate-blueprint.sh` checks each declared limitation against the text that states it. |
 | AC-11 | FR-20 | On a checkout with `core.autocrlf=true`, the gate reaches the same verdict it reaches with LF, and a CR in a tracked text file is reported as a line-ending fault naming that file. | `bash scripts/validate-blueprint.sh` on a CRLF checkout; the mutation suite converts a phase document to CRLF and asserts the gate fails on that file. |
 | AC-12 | FR-21, FR-22 | No CI job can run unbounded, a superseded run is cancelled, and the reusable workflow's documented example pins a reference that carries the checks it describes. | `validate-blueprint.sh` fails if a job loses `timeout-minutes`, if either workflow loses `concurrency`, or if the example reintroduces `@v1.0.0`. |
+| AC-13 | FR-23, FR-24, FR-25 | The language of each class of document is declared, every prose reference to an ADR, a phase document or a standard resolves, and the accepted commit types live in `standards/git.md` alone. | `validate-blueprint.sh` fails if the language declaration in `CONTRIBUTING.md` is removed, if a backticked document reference does not resolve, or if the git standard loses its quality gate or type list. The mutation suite introduces each of those three faults and asserts the gate fails. |
 
 ## Traceability
 This register is the root of the chain, and each row names where its requirement goes. The
@@ -152,7 +156,7 @@ delivering release is declared here rather than allowed to lapse.
 | `v1.0.0` | FR-01 … FR-08, NFR-01 … NFR-07 |
 
 Requirements not listed against a release are in development or declared as not provided. That
-includes FR-09 … FR-22 and NFR-08 … NFR-10, which are delivered by the unreleased `1.1.0-dev`.
+includes FR-09 … FR-25 and NFR-08 … NFR-10, which are delivered by the unreleased `1.1.0-dev`.
 
 ## Dependencies
 - Git and GitHub (or an equivalent platform) for branching, pull requests and CI execution; the
@@ -190,7 +194,7 @@ includes FR-09 … FR-22 and NFR-08 … NFR-10, which are delivered by the unrel
 
 This register changes in the same change that alters what the repository is held to, and never
 alone in a housekeeping commit. A change that adds, removes or revises an entry states which of
-FR-01 … FR-22 it is answerable to, because a requirement that exists for no reason is not a
+FR-01 … FR-25 it is answerable to, because a requirement that exists for no reason is not a
 requirement.
 
 An identifier is never reused. A requirement that changes meaning keeps its identifier and gains

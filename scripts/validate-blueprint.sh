@@ -745,6 +745,69 @@ if grep -rnE '\bPrefer\b' blueprint/0*.md blueprint/1*.md standards/ templates/ 
   fail "normative text uses 'Prefer' as if it were modality (see ADR-008)"
 fi
 
+echo "== A decision is significant, not merely important (see standards/terms.md) =="
+# terms.md removed 'important' as a threshold and defined 'significant
+# decision' by criteria. The two documents that still used the old word are
+# the defect this check exists to keep gone. It is the phrase that is banned,
+# not the word: prose may explain that something is NOT important without
+# reintroducing a threshold, which is exactly what the corrected text does.
+if grep -rniE 'important[[:space:]]+(architectural[[:space:]]+)?(decision|assumption)' \
+    blueprint/0*.md blueprint/1*.md templates/ 2>/dev/null; then
+  fail "normative text uses 'important' as the threshold; use the criteria in standards/terms.md"
+fi
+
+echo "== The git standard is checkable and the single source of the commit types (see FR-25) =="
+check_file standards/git.md
+if ! grep -qx '## Quality gate' standards/git.md; then
+  fail "standards/git.md declares no quality gate"
+fi
+for t in feat fix docs chore refactor test ci build release; do
+  if ! grep -qE "\`${t}\`" standards/git.md; then
+    fail "standards/git.md does not declare \`${t}\` as an accepted commit type"
+  fi
+done
+# The traceability rule is an obligation since ADR-013. A standard that still
+# offers it as a convenience contradicts the requirement it sits under.
+if grep -q 'when practical' standards/git.md; then
+  fail "standards/git.md still states traceability as optional, which FR-19 and ADR-013 made an obligation"
+fi
+if ! grep -q 'standards/git.md' CONTRIBUTING.md; then
+  fail "CONTRIBUTING.md does not point at standards/git.md as the source of the commit rules"
+fi
+
+echo "== The language of each class of document is declared (see FR-23) =="
+# The repository is bilingual and used to say so nowhere. A contributor had
+# to infer the rule from the files they happened to open.
+if ! grep -qx '### Language' CONTRIBUTING.md; then
+  fail "CONTRIBUTING.md declares no language policy"
+fi
+if ! grep -q 'installed into other projects' CONTRIBUTING.md; then
+  fail "CONTRIBUTING.md states a language policy without saying why English is the normative language"
+fi
+
+echo "== A document reference in prose resolves (see FR-24) =="
+# The internal-link check below only sees [text](path). A path in backticks is
+# invisible to it, and three ADR references had drifted to names that never
+# existed. A backticked reference to an ADR, a phase document or a standard is
+# a living pointer, never a legitimate absence, so all three are resolved.
+# Document filenames are stable; if that ever changes, this is where a rename
+# would be caught rather than left to a dead reference.
+# CHANGELOG.md is excluded: a record of those defects has to be able to name
+# the paths that were wrong, which is the same reason the modality check
+# excludes the standards that quote the words they ban.
+missing=$(grep -rhoE '`(blueprint/(architecture/adr/)?adr-[0-9]{3}-[A-Za-z0-9-]+\.md|blueprint/[0-9]{2}-[A-Za-z0-9-]+\.md|standards/[A-Za-z0-9-]+\.md)`' \
+  blueprint/ standards/ templates/ README.md CONTRIBUTING.md AGENTS.md 2>/dev/null \
+  | tr -d '`' | sort -u | while IFS= read -r ref; do
+    case "$ref" in
+      blueprint/*|standards/*) p="$ref" ;;
+      *) p="blueprint/architecture/adr/$ref" ;;
+    esac
+    [ -e "$p" ] || echo "$ref"
+  done)
+if [ -n "$missing" ]; then
+  fail "a backticked document reference does not resolve: $(echo "$missing" | tr '\n' ' ')"
+fi
+
 echo "== OpenCode adapter =="
 for s in blueprint blueprint-architecture blueprint-cicd blueprint-development blueprint-requirements; do
   check_file ".opencode/skills/${s}/SKILL.md"

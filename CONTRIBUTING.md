@@ -44,9 +44,15 @@ This repository lints itself with `markdownlint-cli` (pinned version in `.github
 
 Use `shall` / `should` / `may` deliberately, following [standards/normative-language.md](standards/normative-language.md). Use the vocabulary in [standards/terms.md](standards/terms.md), and add a term there when you rely on one that is not defined. A quality gate that cannot be falsified is not a gate.
 
+### Language
+
+The normative content of this repository — the phase documents, the standards and the templates — is written in English, because that content is installed into other projects and read by people who did not choose it. The decision records in `blueprint/architecture/adr/` are written in the maintainer's language, because a record of why a decision was made is only useful if the person who made it could write it without translating.
+
+This is a rule about *which* language a document is written in, not about translating existing documents: a document may be revised, but it is not rewritten in another language to satisfy this rule. A new phase document or standard is written in English; a new ADR is written in the language its author thinks in, and the language may differ between ADRs.
+
 ## Commit messages and branches
 
-Follow [standards/git.md](standards/git.md) and [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Note that only `feat` and `fix` are defined by the Conventional Commits specification; the other types this project uses (`chore`, `docs`, `refactor`, `test`, `ci`, `build`) come from the `commitlint` conventional configuration.
+Follow [standards/git.md](standards/git.md), which lists the accepted commit types and the branch rules, and [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Only `feat` and `fix` come from the specification; the other accepted types come from the `commitlint` conventional configuration, and `standards/git.md` is the source for the list.
 
 ## What we will not accept
 

@@ -8,7 +8,9 @@ Analyse the requirement before choosing an implementation.
 - Identify dependencies and integrations.
 - Identify alternatives.
 - Evaluate constraints and risks.
-- Record important assumptions.
+- Record the assumptions that would change a functional requirement or a threshold if they
+  proved false. An assumption that changes nothing is not worth recording, and one that is
+  recorded because it felt important is indistinguishable from one that is not.
 
 ## Information items
 ### Inputs
