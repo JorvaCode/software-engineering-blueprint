@@ -18,6 +18,9 @@ All paths below are relative to the project root.
 - `standards/code-design.md`
 - `standards/definition-of-done.md`
 - `standards/git.md`
+- `standards/normative-language.md`
+- `standards/terms.md`
+- `standards/information-items.md`
 - `templates/change.md`
 
 ## Procedure

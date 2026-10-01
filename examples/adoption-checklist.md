@@ -20,7 +20,7 @@ Linux/macOS:
 
 The destination directory is created if it does not exist. A directory already present in the destination is skipped with a warning; nothing is silently overwritten. The installer prints every directory installed and returns a non-zero exit code on failure.
 
-Each run also writes `.blueprint-install.json` in the destination, recording the blueprint version, when it was installed, by which installer, and which entries were applied. Keep it. It is how the project answers "which blueprint is this, and has it been modified since" without searching, and an existing manifest is never overwritten, so a hand-edited one survives a re-install.
+Each run also writes `.blueprint-install.json` in the destination, recording the blueprint version, when it was installed, by which installer, and which entries were actually applied. Keep it. It is how the project answers "which blueprint is this" without searching, and an existing manifest is never overwritten, so a hand-edited one survives a re-install. It records no content hash, so it cannot tell you whether the installed copy has been edited since; compare against the tagged release instead.
 
 ## Initial adoption
 - [ ] Copy blueprint into repository or reference the central blueprint repository.

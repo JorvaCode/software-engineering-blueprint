@@ -16,6 +16,12 @@
 # that receives someone else's package.json is a consumer with a bug they did
 # not write. See ADR-011.
 #
+# Separately, and outside the allowlist, it distributes the two licences:
+# LICENSE (documentation, CC BY 4.0) and LICENSE-CODE (code, Apache-2.0). The
+# documentation licence conditions reuse on attribution, so a consumer that
+# receives the content has to receive the terms with it. A destination that
+# already has a LICENSE is left untouched. See ADR-012.
+#
 # Does NOT install: .git/  .github/  scripts/  README.md  or other
 # repository-only files.
 #
@@ -37,6 +43,12 @@ DEST="$1"
 installed=0
 skipped=0
 failed=0
+
+# The entries actually applied, which is not the same list as the allowlist. An
+# entry that was skipped because it already existed, or because it is absent from
+# the source, was NOT applied, and recording it as if it had been tells the
+# consumer something false about their own repository. See ADR-011.
+installed_entries=()
 
 echo "[blueprint-init] Installing Software Engineering Blueprint into: $DEST"
 echo "[blueprint-init] Source: $BLUEPRINT_ROOT"
@@ -105,11 +117,52 @@ install_entry() {
 
   echo "[blueprint-init] installed  $name/"
   installed=$((installed + 1))
+  installed_entries+=("$name")
 }
 
 for entry in $ALLOWLIST; do
   install_entry "$entry"
 done
+
+# Licence distribution. Deliberately NOT the allowlist. The allowlist names the
+# content directories that make up the blueprint, and a licence is not content of
+# the process; this is a separate distribution decision, recorded in ADR-012,
+# with its own evidence in the manifest below.
+#
+# The documentation is CC BY 4.0 and the code is Apache-2.0. CC BY 4.0
+# conditions reuse on attribution, so a consumer handed the content without the
+# terms has a permission whose condition it cannot satisfy.
+#
+# A destination that already has a LICENSE is left alone. The licence in a
+# project's root is that project's, and overwriting it is a defect rather than a
+# courtesy. See ADR-012.
+DOC_LICENCE="CC-BY-4.0"
+CODE_LICENCE="Apache-2.0"
+licence_files=()
+
+install_licences() {
+  if [ -e "$DEST/LICENSE" ]; then
+    echo "[blueprint-init] NOTICE    destination already has a LICENSE; leaving it untouched and not adding ours"
+    return
+  fi
+  local l
+  for l in LICENSE LICENSE-CODE; do
+    if [ ! -f "$BLUEPRINT_ROOT/$l" ]; then
+      echo "[blueprint-init] ERROR: required licence file missing: $l" >&2
+      failed=1
+      return
+    fi
+    if ! cp "$BLUEPRINT_ROOT/$l" "$DEST/$l"; then
+      echo "[blueprint-init] ERROR: failed to copy '$l'." >&2
+      failed=1
+      return
+    fi
+    echo "[blueprint-init] installed  $l"
+    licence_files+=("$l")
+  done
+}
+
+install_licences
 
 # Record what was installed, so a consumer can tell which blueprint it has and
 # whether it has been modified since. The version is the identifier; there is no
@@ -123,14 +176,37 @@ else
 fi
 
 if [ ! -e "$DEST/.blueprint-install.json" ]; then
+  # The entries recorded here are the ones this run actually applied. The
+  # allowlist is not, because an entry skipped as already-present was not
+  # applied, and a manifest that claims otherwise misreports the destination.
+  if [ "${#installed_entries[@]}" -gt 0 ]; then
+    entries_json=$(printf '    "%s",\n' "${installed_entries[@]}" | sed '$ s/,$//')
+  else
+    entries_json=""
+  fi
+  # The licence files are recorded as delivered, not as intended. A destination
+  # that brought its own LICENSE received none of ours, and a manifest listing
+  # them anyway is the same false report commit 679dbb4 removed from entries.
+  if [ "${#licence_files[@]}" -gt 0 ]; then
+    licence_json=$(printf '      "%s",\n' "${licence_files[@]}" | sed '$ s/,$//')
+  else
+    licence_json=""
+  fi
   cat > "$DEST/.blueprint-install.json" <<EOF
 {
   "blueprint": "software-engineering-blueprint",
   "version": "$BP_VERSION",
   "installedAt": "$(date -u '+%Y-%m-%dT%H:%M:%SZ')",
   "installer": "scripts/blueprint-init.sh",
+  "licenses": {
+    "documentation": "$DOC_LICENCE",
+    "code": "$CODE_LICENCE",
+    "files": [
+$licence_json
+    ]
+  },
   "entries": [
-$(printf '    "%s",\n' $ALLOWLIST | sed '$ s/,$//')
+$entries_json
   ]
 }
 EOF
@@ -142,6 +218,10 @@ fi
 echo ""
 echo "[blueprint-init] Installed: $installed item(s)"
 echo "[blueprint-init] Skipped (already present): $skipped"
+# Unconditional, because the terms matter most in the case where they were not
+# copied: a destination that kept its own LICENSE still needs to know what the
+# content it just received is under.
+echo "[blueprint-init] Licence: documentation $DOC_LICENCE, code $CODE_LICENCE (see ADR-012)"
 
 if [ "$failed" -ne 0 ]; then
   echo "[blueprint-init] Installation FAILED." >&2

@@ -1,4 +1,4 @@
-# Software Engineering Blueprint v1.0.0
+# Software Engineering Blueprint
 
 A tool-agnostic, reusable blueprint for professional software delivery, from requirements specification through Continuous Integration (CI), Continuous Delivery (CD), deployment and observability. It defines the full engineering lifecycle — the phases, the artifacts each phase must produce, and the quality gates that apply — while leaving the concrete language, framework, IDE, cloud, registry and deployment platform to each adopting project.
 
@@ -71,7 +71,7 @@ Design quality is checked, not assumed. `standards/code-design.md` treats SOLID 
 - `.opencode/skills/` — optional OpenCode adapter (routers to `blueprint/`).
 - `.opencode/agents/` — optional OpenCode subagent for autonomous blueprint passes.
 - `.github/workflows/` — example CI workflow and reusable workflow.
-- `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/CODEOWNERS` — contribution workflow.
+- `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md` — contribution workflow.
 - `examples/` — examples for adopting the blueprint.
 
 The blueprint is IDE-agnostic: it can be used from IntelliJ IDEA, Visual Studio, VS Code or any other IDE. It is also technology-agnostic at the process level — each project chooses its own language, framework, cloud, registry and deployment platform.
@@ -107,7 +107,7 @@ The installers are covered by their own suites, `scripts/test-installers.sh` and
 
 The installed blueprint version is declared in the [`VERSION`](VERSION) file at the root. It carries the version this working tree produces, including a `-dev` suffix while the [CHANGELOG.md](CHANGELOG.md) has work under `[Unreleased]`.
 
-Each installer writes `.blueprint-install.json` into the destination, recording the version that was installed, when, by which installer, and which entries were applied. A project can therefore answer "which blueprint is this and has it been modified since" without searching. The installer never overwrites an existing manifest, because a hand-edited one may be more accurate than the one it would write.
+Each installer writes `.blueprint-install.json` into the destination, recording the version that was installed, when, by which installer, and which entries were actually applied — an entry skipped because it already existed is not recorded, because it was not applied. A project can therefore answer "which blueprint is this" without searching. It cannot answer "has it been modified since" from the manifest: there is no content hash, by design, so that a consumer's local edits do not look like corruption. The installer never overwrites an existing manifest, because a hand-edited one may be more accurate than the one it would write.
 
 There is no content hash in the manifest. `sha256sum` is not POSIX — macOS calls it `shasum` — and the installers promise not to need anything external. The version is the identifier, and it is the one the project controls. See [ADR-011](blueprint/architecture/adr/adr-011-distribucion-versionada-y-manifiesto.md).
 
@@ -137,8 +137,15 @@ Copy the relevant directories into a project or keep this repository as a centra
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The gate is `.github/workflows/ci.yml`; it validates repository structure, phase documents, templates, standards, ADRs, the OpenCode adapter, every internal Markdown link, and the prose itself via `markdownlint-cli`.
 
-Two maintainer-owned placeholders must be completed before this repository is published: the private reporting contact in [SECURITY.md](SECURITY.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and the team in [.github/CODEOWNERS](.github/CODEOWNERS). See [ADR-007](blueprint/architecture/adr/adr-007-licencia-y-gobernanza-del-repositorio.md).
+Reporting and conduct go through GitHub's private channels, so neither needs a mailbox that a maintainer would have to remember to watch. See [SECURITY.md](SECURITY.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). There is no `CODEOWNERS` file: with a single maintainer there is no second account to name, and an entry that matches no account is ignored by GitHub without a warning, which would look like review enforcement while enforcing nothing. The file returns as a one-line addition when there is someone else to name. See [ADR-007](blueprint/architecture/adr/adr-007-licencia-y-gobernanza-del-repositorio.md).
 
 ## License
 
-This work is licensed under the [Creative Commons Attribution 4.0 International](LICENSE) licence (CC BY 4.0). You may share and adapt it, including commercially, provided you give appropriate credit, link the licence and indicate changes.
+This work is licensed in two parts, because it contains two kinds of work.
+
+- **Documentation** — `blueprint/`, `templates/`, `standards/`, `examples/`, this README, `CONTRIBUTING.md` and the ADR records — under the [Creative Commons Attribution 4.0 International](LICENSE) licence (CC BY 4.0). You may share and adapt it, including commercially, provided you give appropriate credit, link the licence and indicate changes.
+- **Code** — the installers under `scripts/` and the workflow definitions under `.github/workflows/` — under the [Apache License 2.0](LICENSE-CODE).
+
+The split is not a preference. Creative Commons recommends against applying a CC licence to software, because it carries no terms about distributing source code, addresses patent rights only by exclusion, and is not compatible with the major software licences. Its own FAQ says so: <https://creativecommons.org/faq/>. See [ADR-012](blueprint/architecture/adr/adr-012-licencia-del-codigo-y-distribucion-de-licencias.md).
+
+Both installers copy `LICENSE` and `LICENSE-CODE` into the destination, unless the destination already has a `LICENSE` of its own, which is never overwritten. The two licences are also recorded in `.blueprint-install.json`, so a project can answer what the installed content is under without searching.

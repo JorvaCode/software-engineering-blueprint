@@ -40,6 +40,22 @@ An information item carries an identity, not a filename. A change that alters wh
 
 The project decides its own version scheme. Where it adopts Semantic Versioning, an information item that is a **description** or a **specification** — in the 15289 sense — follows it, and a change to a public contract is a major change. This is a recommendation, not an obligation: the obligation is that the version is stated and that history is preserved.
 
+## Traceability
+
+`ADR-009` declared the information items and recorded that it did not link the phases to each other. `ADR-013` closes that. The mechanism is a field on an item that already exists, not a new artifact: a traceability matrix is a second document that can desynchronise, and a desynchronised matrix is not traceability, it is a second place to be confidently wrong.
+
+An output that realises, implements or verifies a requirement **shall** name the identifier. The three statements that close the chain are:
+
+- **A requirement is named by identifier, states its verification, and names the artifact that realises it.** The identifier is stable across rewording. `FR-nn` and `NFR-nn` survive the edit of their own text; an identifier that is an abbreviation of the sentence it names dies with the sentence.
+- **An acceptance criterion carries an identifier** — `AC-nn` — so that the test which verifies it and the release which delivered it name the same thing. Without one, "the criterion that says X" is a reference that breaks the first time the requirement is reworded.
+- **A release names the requirements and changes it delivers.** This is the delivery endpoint, and it lives in `11-continuous-delivery.md`. A release record that identifies its artifact precisely and cannot say what it delivered is a description of what exists, not a record of what was asked for.
+
+A change that satisfies no requirement **shall** say so, rather than leaving the field absent. A prose erratum invents no `FR-nn` to satisfy a validator; a new capability that nobody requested does need one. This is the same distinction `standards/code-design.md` draws for an absent pattern: an absence that is declared is a decision, and an absence that is undeclared is a gap.
+
+The granularity is the requirement, not the line. A project with two hundred requirements does not produce two hundred rows; it traces from each change to the requirement that change satisfies, and from each requirement to the release that delivered it. A requirement with no delivering release is a declared requirement that has not shipped, and the release record states that, rather than the requirement quietly lapsing.
+
 ## Known limitation
 
-This standard makes each phase's outputs checkable against the phase's own text. It does not yet make the phases checkable against each other: a change to a requirement has no enforced link to the design and the tests that implement it, and to the release that shipped it. That is traceability, it is a separate concern, and it is not solved here.
+This standard links the phases by declaration. It does not check them: no tool verifies that a release record lists the requirements it actually delivered, and a review that does not look for an omission will not find it. The rule is enforced by review, and a rule enforced by review is a weaker rule than one enforced by a gate.
+
+`ADR-013` records the same trade-off and the option that would close it, which is a project of its own and is not part of this standard.

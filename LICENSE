@@ -1,16 +1,27 @@
-Software Engineering Blueprint
+Software Engineering Blueprint - licence for the documentation
 
 Copyright (c) 2026 JorvaCode and contributors
 
-This work is licensed under the Creative Commons Attribution 4.0 International
-License (CC BY 4.0). You are free to share and adapt this material for any
-purpose, even commercially, provided you give appropriate credit, link to the
-license, and indicate if changes were made.
+The documentation in this repository is licensed under the Creative Commons
+Attribution 4.0 International License (CC BY 4.0). You are free to share and
+adapt this material for any purpose, even commercially, provided you give
+appropriate credit, link to the license, and indicate if changes were made.
+
+  This licence covers: blueprint/  templates/  standards/  examples/
+  README.md  CONTRIBUTING.md  and the ADR records under
+  blueprint/architecture/adr/.
+
+The code in this repository - the installer scripts under scripts/ and the
+workflow definitions under .github/workflows/ - is NOT covered by this licence.
+It is licensed under the Apache License, Version 2.0; see LICENSE-CODE. The
+split exists because Creative Commons recommends against using a CC licence on
+software, and CC BY 4.0 states that patent and trademark rights are not
+licensed under it. See ADR-012.
 
 Human-readable summary: https://creativecommons.org/licenses/by/4.0/
 License deed:           https://creativecommons.org/licenses/by/4.0/legalcode
 
-The complete legal code follows verbatim.
+The complete legal code of CC BY 4.0 follows verbatim.
 Attribution 4.0 International
 
 =======================================================================

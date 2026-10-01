@@ -4,13 +4,22 @@ name: Reusable Blueprint Validation
 #
 #   jobs:
 #     blueprint:
-#       uses: JorvaCode/software-engineering-blueprint/.github/workflows/reusable-blueprint-validation.yml@v1.0.0
+#       uses: JorvaCode/software-engineering-blueprint/.github/workflows/reusable-blueprint-validation.yml@main
 #
-# Pin a tag, never a branch: this workflow is a quality gate, and a gate that
-# moves under you is not a gate. Note that @v1.0.0 still carries the original
-# three-call version of this file; the floor described below ships in the next
-# tag. Until then, pin the branch if you need the current checks, and expect to
-# re-pin when the tag lands.
+# Pin the branch, and re-pin to a tag once a tag carries this content. Two
+# reasons pull against each other here and the honest position is that this
+# repository has not resolved them:
+#
+#   - A tag is the correct thing to pin. This workflow is a quality gate, and a
+#     gate that moves under you is not a gate.
+#   - The v1.0.0 tag predates the structural floor below. Pinning it gives a
+#     consumer the original three-call version, which does not check what this
+#     file goes on to describe.
+#
+# Pointing the example at v1.0.0 anyway would hand the consumer a workflow that
+# silently checks less than its own documentation promises, and a consumer has
+# no way to tell. A branch that can move is the smaller of those two failures,
+# so the example pins the branch and says why.
 #
 # The validation is NOT shared with this repository's gate. It cannot be:
 # scripts/validate-blueprint.sh validates *this* repository and the installers
@@ -37,10 +46,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Validate installed blueprint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v5

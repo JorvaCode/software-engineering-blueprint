@@ -19,6 +19,16 @@ check() {
   if eval "$2"; then ok "$1"; else bad "$1" "$2"; fi
 }
 
+# Read a field out of the manifest, structurally. Counting lines that start with
+# four spaces and a quote was a proxy for the size of the entries array, and the
+# license block broke the proxy rather than the manifest: the license keys sit at
+# the same indent, so the proxy counted seven. A count that fails when an
+# unrelated field is added is measuring the formatting, not the behaviour.
+manifest_entries() {
+  python3 -c "import json,sys;print(','.join(json.load(open(sys.argv[1]))['entries']))" "$1" 2>/dev/null \
+    || node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).entries.join(','))" "$1"
+}
+
 # Poison the source with artifacts the allowlist must NOT ship.
 touch "$REPO/.opencode/package.json"
 printf 'poison\n' > "$REPO/.opencode/package-lock.json"
@@ -72,11 +82,61 @@ echo "  --- known limitation, pinned on purpose ---"
 check "KNOWN: a stray file inside an allowlisted content dir DOES ship" \
   "[ -e '$DEST/blueprint/LEFTOVER-FROM-LOCAL-WORK.md' ]"
 
+echo "  --- the manifest records what was applied, not the allowlist ---"
+# A destination that already has one of the allowlisted entries. That entry is
+# skipped, so it was NOT applied, and a manifest that lists it anyway tells the
+# consumer something false about their own repository. See ADR-011.
+DEST_SKIP="$WORK/bash-skip-target"
+mkdir -p "$DEST_SKIP/templates"
+out3=$(bash scripts/blueprint-init.sh "$DEST_SKIP" 2>&1)
+check "pre-existing entry is skipped" "echo \"\$out3\" | grep -q 'already exists'"
+check "manifest written for a partial install" "[ -f '$DEST_SKIP/.blueprint-install.json' ]"
+check "manifest does NOT record the skipped entry" "! grep -q '\"templates\"' '$DEST_SKIP/.blueprint-install.json'"
+check "manifest DOES record an entry that was applied" "grep -q '\"blueprint\"' '$DEST_SKIP/.blueprint-install.json'"
+check "partial manifest is valid JSON" \
+  "python3 -c \"import json;json.load(open('$DEST_SKIP/.blueprint-install.json'))\" 2>/dev/null || node -e \"JSON.parse(require('fs').readFileSync('$DEST_SKIP/.blueprint-install.json','utf8'))\""
+check "full install records exactly the five allowlisted entries, in order" \
+  "[ \"\$(manifest_entries '$DEST/.blueprint-install.json')\" = 'blueprint,templates,standards,.opencode/agents,.opencode/skills' ]"
+
 echo "  --- installed content is usable ---"
 check "all 15 phase docs copied" "[ \$(ls -1 '$DEST/blueprint'/[0-9][0-9]-*.md 2>/dev/null | wc -l) -eq 15 ]"
 check "5 skills copied"          "[ \$(ls -1 '$DEST/.opencode/skills' | wc -l) -eq 5 ]"
 check "every phase declares information items" \
   "for d in '$DEST'/blueprint/[0-9][0-9]-*.md; do case \"\$(basename \$d)\" in 00-*) continue;; esac; grep -q '^## Information items' \"\$d\" || exit 1; done"
+
+echo "  --- the licences travel with the content (ADR-012) ---"
+# CC BY 4.0 conditions reuse on attribution. A consumer handed the content
+# without the terms holds a permission whose condition it cannot satisfy, so the
+# licences are part of what an install delivers, not an optional extra.
+check "LICENSE shipped"                    "[ -f '$DEST/LICENSE' ]"
+check "LICENSE-CODE shipped"               "[ -f '$DEST/LICENSE-CODE' ]"
+check "shipped LICENSE is the CC BY 4.0 text" "grep -q 'Attribution 4.0 International' '$DEST/LICENSE'"
+check "shipped LICENSE-CODE is the Apache-2.0 text" "grep -q 'Apache License' '$DEST/LICENSE-CODE'"
+check "manifest records the documentation licence" "grep -q '\"documentation\": \"CC-BY-4.0\"' '$DEST/.blueprint-install.json'"
+check "manifest records the code licence"  "grep -q '\"code\": \"Apache-2.0\"' '$DEST/.blueprint-install.json'"
+check "manifest records both delivered licence files" "grep -q '\"LICENSE-CODE\"' '$DEST/.blueprint-install.json'"
+check "installer prints the licence notice" "echo \"\$out\" | grep -q 'Licence:'"
+# The licence files must not be listed as content entries: they travel by a
+# separate rule, and a consumer reading the manifest should not conclude it
+# received the blueprint's own LICENSE as part of the allowlist.
+check "licence files are NOT listed as content entries" \
+  "! printf '%s' \"\$(manifest_entries '$DEST/.blueprint-install.json')\" | grep -q 'LICENSE'"
+
+echo "  --- a destination that owns its LICENSE is never overwritten (ADR-012) ---"
+# The licence in a project's root is that project's. Overwriting it is a defect,
+# not a courtesy. The manifest must then report zero delivered licence files,
+# because claiming otherwise is the same false report commit 679dbb4 removed.
+DEST_LIC="$WORK/bash-ownlic-target"
+mkdir -p "$DEST_LIC"
+printf 'my own project licence\n' > "$DEST_LIC/LICENSE"
+out4=$(bash scripts/blueprint-init.sh "$DEST_LIC" 2>&1)
+check "pre-existing LICENSE is not overwritten"  "grep -q 'my own project licence' '$DEST_LIC/LICENSE'"
+check "no LICENSE-CODE added beside it"          "[ ! -e '$DEST_LIC/LICENSE-CODE' ]"
+check "installer says it left the LICENSE alone" "echo \"\$out4\" | grep -q 'NOTICE'"
+check "manifest claims no delivered licence file" "! grep -q '\"LICENSE-CODE\"' '$DEST_LIC/.blueprint-install.json'"
+check "manifest still records both licences"     "grep -q '\"code\": \"Apache-2.0\"' '$DEST_LIC/.blueprint-install.json'"
+check "ownlicence manifest is valid JSON" \
+  "python3 -c \"import json;json.load(open('$DEST_LIC/.blueprint-install.json'))\" 2>/dev/null || node -e \"JSON.parse(require('fs').readFileSync('$DEST_LIC/.blueprint-install.json','utf8'))\""
 
 echo "  --- re-running is safe and does not clobber the manifest ---"
 printf 'hand-edited\n' > "$DEST/.blueprint-install.json"

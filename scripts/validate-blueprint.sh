@@ -5,10 +5,14 @@
 #
 #   bash scripts/validate-blueprint.sh
 #
-# It is called by .github/workflows/ci.yml and by
-# .github/workflows/reusable-blueprint-validation.yml, so the three can never
-# disagree. A validation that exists in two places is a validation that will
-# eventually exist in two versions. See ADR-011.
+# It is called by .github/workflows/ci.yml, and by nothing else.
+#
+# .github/workflows/reusable-blueprint-validation.yml is a second implementation
+# and deliberately so: it validates a *consuming* repository, scripts/ is never
+# installed into one, and most of the checks below test facts that exist only in
+# this repository (ADRs, governance, VERSION, this repository's own prose links).
+# The section "Reusable workflow stays self-contained" below enforces that the two
+# never collide. See ADR-011.
 #
 # Requires only POSIX shell utilities: no Node, no Python, no network.
 
@@ -40,6 +44,41 @@ check_dir .opencode/skills
 check_dir .opencode/agents
 check_dir .github/workflows
 
+echo "== Line endings cannot silently break the checks below (see FR-20) =="
+# This runs first, before anything else parses a document, because it is the
+# only fault that makes every later result untrustworthy. The gate decides a
+# phase with `grep -qx '## Information items'`, which matches a whole line. A
+# contributor on Windows with core.autocrlf=true — the Git for Windows default,
+# and a local setting this repository cannot ship — gets CRLF, and then all
+# fourteen phases fail at once for a reason that has nothing to do with the
+# phase. Placed at the end, this check would be correct and useless: the reader
+# would have read three false violations before reaching the real cause.
+#
+# core.autocrlf is not reachable from here, so the guarantee is a file that
+# reaches the checkout (.gitattributes) plus this check, which names the cause
+# instead of reporting its symptom fourteen times.
+if [ ! -f .gitattributes ]; then
+  fail "missing .gitattributes; a CRLF checkout makes this gate report fourteen false failures"
+fi
+# The rules the checks below depend on. *.ps1 is deliberately the other way
+# round, and is asserted too rather than left to the default.
+for rule in '^\* text=auto eol=lf' '^\*\.sh +text eol=lf' '^\*\.md +text eol=lf' '^\*\.yml +text eol=lf'; do
+  if ! grep -qE "$rule" .gitattributes; then
+    fail ".gitattributes is missing the rule ${rule#^}"
+  fi
+done
+if ! grep -qE '^\*\.ps1 +text eol=crlf' .gitattributes; then
+  fail ".gitattributes must pin *.ps1 to CRLF, which is what PowerShell tooling writes"
+fi
+# Restricted to the extensions this gate parses and that .gitattributes pins to
+# LF, because a CR in a .ps1 is correct rather than a fault.
+crlf=$(find . \( -name '*.sh' -o -name '*.md' -o -name '*.yml' \) -type f \
+  -not -path './.git/*' -not -path './.opencode/node_modules/*' -not -name '.gitattributes' \
+  -exec grep -lIU $'\r' {} + 2>/dev/null)
+if [ -n "$crlf" ]; then
+  fail "CRLF line endings in files this gate parses: $(echo "$crlf" | tr '\n' ' ') (see FR-20; run 'git add --renormalize .')"
+fi
+
 echo "== Distribution identity (see ADR-011) =="
 check_file VERSION
 # A version file with no content identifies nothing.
@@ -61,7 +100,6 @@ check_file SECURITY.md
 check_file CODE_OF_CONDUCT.md
 check_file .editorconfig
 check_file .markdownlint.json
-check_file .github/CODEOWNERS
 check_file .github/PULL_REQUEST_TEMPLATE.md
 check_file .github/ISSUE_TEMPLATE/bug_report.yml
 check_file .github/ISSUE_TEMPLATE/feature_request.yml
@@ -73,6 +111,22 @@ for f in LICENSE CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md; do
     fail "empty governance file: $f"
   fi
 done
+# A governance file that exists but says "TODO(owner)" protects nothing, and the
+# previous check only tested for emptiness, so the repository could report a green
+# gate while every owner-dependent control in it was still unwritten. A
+# placeholder in a governance file is a defect, not a note.
+for f in CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md; do
+  if grep -qE 'TODO\(|FIXME|XXX' "$f"; then
+    fail "governance file still carries a placeholder: $f"
+  fi
+done
+# CODEOWNERS is deliberately not required. It was required while naming a team
+# that may not exist, and an entry matching no account is ignored by GitHub
+# without warning, so the file gave the appearance of review enforcement and none.
+# It returns as a one-file change the moment there is a second maintainer to name.
+if [ -f .github/CODEOWNERS ] && grep -qE 'TODO\(|FIXME|XXX' .github/CODEOWNERS; then
+  fail ".github/CODEOWNERS carries a placeholder owner"
+fi
 
 echo "== Installers =="
 check_file scripts/blueprint-init.ps1
@@ -80,6 +134,42 @@ check_file scripts/blueprint-init.sh
 for i in scripts/blueprint-init.ps1 scripts/blueprint-init.sh; do
   if [ ! -s "$i" ]; then
     fail "empty installer: $i"
+  fi
+done
+
+# One licence cannot honestly cover both the documentation and the code, and
+# Creative Commons says so itself rather than leaving it to be discovered:
+# a CC licence has no terms about distributing source code, addresses patents
+# only by exclusion, and is incompatible with the major software licences. So the
+# split has to be real in the files, not only in the ADR. See ADR-012.
+echo "== Licence split: documentation CC BY 4.0, code Apache-2.0 (see ADR-012) =="
+check_file LICENSE-CODE
+if [ ! -s LICENSE-CODE ]; then
+  fail "empty licence file: LICENSE-CODE"
+fi
+# Matched as a phrase, not as a version string. "Version 2.0" on its own also
+# appears in a file that is not the licence, which is how a check passes after
+# the text it was written for is replaced with something else.
+if ! grep -q 'Apache License' LICENSE-CODE; then
+  fail "LICENSE-CODE does not contain the Apache-2.0 legal code"
+fi
+if ! grep -q 'Version 2.0, January 2004' LICENSE-CODE; then
+  fail "LICENSE-CODE does not carry the Apache-2.0 version line"
+fi
+# A split nobody can find is a split that does not exist. Each file has to point
+# at the other, or a reader who opens the wrong one concludes the whole
+# repository is under that single licence.
+if ! grep -q 'LICENSE-CODE' LICENSE; then
+  fail "LICENSE does not point at LICENSE-CODE, so the code licence is invisible to a reader of LICENSE"
+fi
+if ! grep -q 'CC BY 4.0' LICENSE-CODE; then
+  fail "LICENSE-CODE does not say what the documentation is under"
+fi
+# The documentation has to stop claiming the repository is single-licensed, in
+# every place a human reads it.
+for d in README.md CONTRIBUTING.md; do
+  if ! grep -q 'LICENSE-CODE' "$d"; then
+    fail "${d} still describes the repository as single-licensed; it must name LICENSE-CODE"
   fi
 done
 
@@ -140,6 +230,48 @@ for i in scripts/blueprint-init.sh scripts/blueprint-init.ps1; do
     fail "${i} does not record the blueprint version in the manifest"
   fi
 done
+
+# CC BY 4.0 conditions reuse on attribution. A consumer handed the content
+# without the terms holds a permission whose condition it cannot satisfy, so the
+# licences are part of what an install delivers rather than an optional extra.
+# Both identifiers are required because a manifest naming only the documentation
+# licence understates the terms the consumer received. See ADR-012.
+echo "== Installers deliver the licences and record both (see ADR-012) =="
+for i in scripts/blueprint-init.sh scripts/blueprint-init.ps1; do
+  for l in LICENSE LICENSE-CODE; do
+    if ! grep -q "$l" "$i"; then
+      fail "${i} does not distribute ${l}"
+    fi
+  done
+  for lic in CC-BY-4.0 Apache-2.0; do
+    if ! grep -q "$lic" "$i"; then
+      fail "${i} does not record ${lic} in the manifest"
+    fi
+  done
+done
+
+# The rule that protects a consumer's own repository is that its LICENSE is never
+# overwritten, and a later edit is far more likely to drop that guard than to
+# break the copy. It is therefore asserted where it can actually be observed: in
+# the functional suite that runs both installers against a real destination. This
+# asserts the suite is still asserting it, so the coverage cannot be deleted
+# without the gate noticing.
+echo "== The licence delivery behaviour has functional coverage (see ADR-012) =="
+for t in scripts/test-installers.sh scripts/test-installers.ps1; do
+  check_file "$t"
+done
+if ! grep -q 'pre-existing LICENSE is not overwritten' scripts/test-installers.sh; then
+  fail "scripts/test-installers.sh does not assert that a destination LICENSE survives the install"
+fi
+if ! grep -q 'pre-existing LICENSE is not overwritten' scripts/test-installers.ps1; then
+  fail "scripts/test-installers.ps1 does not assert that a destination LICENSE survives the install"
+fi
+# A manifest that lists licence files it did not deliver is the same false report
+# that commit 679dbb4 removed from the entries array, reintroduced under a new
+# key. Assert the honest-reporting half, not just the delivery half.
+if ! grep -q 'manifest claims no delivered licence file' scripts/test-installers.sh; then
+  fail "scripts/test-installers.sh does not assert that an undelivered licence file is not claimed"
+fi
 
 # The reusable workflow is a second implementation, deliberately, and the docs
 # say so. What it must never be is a claim to be this gate: a consuming
@@ -219,8 +351,39 @@ for a in \
   adr-008-terminologia-y-modalidad-normativa.md \
   adr-009-information-items-por-fase.md \
   adr-010-vistas-y-escenarios-de-atributo-de-calidad.md \
-  adr-011-distribucion-versionada-y-manifiesto.md; do
+  adr-011-distribucion-versionada-y-manifiesto.md \
+  adr-012-licencia-del-codigo-y-distribucion-de-licencias.md \
+  adr-013-trazabilidad-de-extremo-a-extremo.md; do
   check_file "blueprint/architecture/adr/${a}"
+done
+
+echo "== Every ADR follows templates/adr.md =="
+# The template declares the required structure, and until now nothing checked
+# that an ADR followed it. Three of the eleven were written with Spanish
+# headings, Status and Date as a metadata list rather than sections, and a
+# Consequences section with no split, so "the template's headings are required"
+# (standards/normative-language.md) was a claim with no check behind it.
+#
+# Extra sections are permitted: the template is a floor, not a ceiling. ADR-011
+# keeps a Verification section and folds its former Scope line into Context.
+for adr in blueprint/architecture/adr/adr-*.md; do
+  for section in '## Status' '## Context' '## Options considered' '## Decision' '## Consequences' '### Positive' '### Negative / trade-offs' '## Date'; do
+    if ! grep -qF "$section" "$adr"; then
+      fail "$adr is missing the template section: ${section}"
+    fi
+  done
+  if ! head -n 1 "$adr" | grep -qE '^# ADR-[0-9]{3}: .+'; then
+    fail "$adr does not start with a '# ADR-NNN: <title>' heading"
+  fi
+  status=$(awk '/^## Status/{getline; while ($0 ~ /^[[:space:]]*$/) getline; print; exit}' "$adr")
+  case "$status" in
+    Proposed|Accepted|Superseded|Rejected) ;;
+    *) fail "$adr has an invalid Status: '${status}' (expected Proposed, Accepted, Superseded or Rejected)" ;;
+  esac
+  adr_date=$(awk '/^## Date/{getline; while ($0 ~ /^[[:space:]]*$/) getline; print; exit}' "$adr")
+  if ! printf '%s' "$adr_date" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+    fail "$adr has a Date that is not YYYY-MM-DD: '${adr_date}'"
+  fi
 done
 
 echo "== Code design standard is referenced by the phases that gate on it =="
@@ -282,14 +445,41 @@ for i in $(seq -w 1 14); do
 done
 
 echo "== Quality gates name an artifact and cannot be satisfied by adjectives =="
-# These are the exact phrasings the audit found to be unfalsifiable. They
-# are listed rather than pattern-matched, because a gate that cannot fail
-# is the failure mode, and the failure mode is specific to these words.
-if grep -rnEi \
-  'clear, testable, feasible|clear and maintainable|appropriately|as needed|good (practice|quality)|high quality|clean and maintainable' \
-  blueprint/0*.md blueprint/1*.md; then
-  fail "quality gate regressed to unfalsifiable adjectives (see ADR-009)"
-fi
+# The scope is the gate itself, not the whole document. A phase may legitimately
+# discuss feasibility in its guidance; what cannot pass is a gate that asks for
+# it. The previous version grepped whole files for a fixed phrase, which is why
+# "numbered, testable and feasible" sat in phase 01 with the gate green: the
+# phrase it looked for had the word "clear" in front of it.
+#
+# standards/normative-language.md is excluded from the prose sweep below
+# because a standard that defines the ban has to quote what it bans, and
+# quoting "clear, testable, feasible" is the definition working, not failing.
+# The words are matched individually, not as a fixed phrase. The previous
+# version searched for "clear, testable, feasible" as one string, so a gate
+# reading "numbered, testable and feasible" passed, and that is the exact
+# sentence phase 01 carried while this check reported the repository green.
+UNFALSIFIABLE='\btestable\b|\bfeasible\b|\bappropriately\b|\bas needed\b|\bgood +(practice|quality)\b|\bhigh quality\b|\bclear\b|\bclean\b|\bconvincing\b|\bplausible\b|\brobust\b|\badequate\b|\breasonable\b|\bcomplete\b|\bconsidered\b|\baddressed\b|\bwhere applicable\b|\bwhere needed\b'
+for doc in blueprint/[0-9][0-9]-*.md; do
+  gate=$(awk '/^## +Quality gate/{f=1;next} /^## /{f=0} f' "$doc")
+  if printf '%s\n' "$gate" | grep -qEi "$UNFALSIFIABLE"; then
+    fail "quality gate in $doc uses an adjective that cannot fail (see standards/normative-language.md)"
+  fi
+done
+# The modality sweep targets the directive forms, not the bare words. "Consider
+# the rollback path" is a pseudo-obligation and is banned; "the options
+# considered" is the name of a section that templates/adr.md fixes, and banning
+# it would break the template. That distinction is a known limit of this check,
+# not an oversight: a check that could tell the two apart without a hand-written
+# exception list would need to parse English.
+BANNED_MODALITY='\bprefer\b|\b(need|have|try) to\b|\bconsider(s|ed|ing)? +(the|this|these|a|an|whether|against|how)\b'
+for doc in standards/*.md; do
+  case "$doc" in
+    standards/normative-language.md) continue ;;
+  esac
+  if grep -qEi "$BANNED_MODALITY" "$doc"; then
+    fail "$doc uses a non-modality word banned by standards/normative-language.md"
+  fi
+done
 
 echo "== Information items standard is declared and reachable =="
 for f in AGENTS.md standards/definition-of-done.md; do
@@ -302,10 +492,210 @@ done
 if ! grep -q 'Information Items' standards/information-items.md; then
   fail "standards/information-items.md does not define the required section"
 fi
-# The known limitation is only honest if it is stated in the artifact
-# that carries the limitation, not just in the ADR.
-if ! grep -q 'not yet make the phases checkable against each other' standards/information-items.md; then
-  fail "standards/information-items.md must state the traceability limitation it does not solve"
+# The residual limitation is only honest if it is stated in the artifact that
+# carries it, and it is no longer the one ADR-009 recorded. The previous check
+# required the sentence "not yet make the phases checkable against each other"
+# to be present, which made it impossible to fix the limitation: the gate
+# failed the moment it stopped being true.
+if grep -q 'not yet make the phases checkable against each other' standards/information-items.md; then
+  fail "standards/information-items.md still declares traceability unresolved; ADR-013 resolves it"
+fi
+# Replacing it with silence would be worse than the stale claim, so the
+# residual limit has to be named: the rule is review-enforced, not tool-checked.
+if ! grep -q 'enforced by review' standards/information-items.md; then
+  fail "standards/information-items.md must state that traceability is review-enforced, not tool-checked"
+fi
+
+echo "== The traceability chain is closed from requirement to release =="
+# ADR-013 closes the limitation ADR-009 recorded, and it does so with a field
+# on items that already exist rather than a new artifact. That decision is only
+# real if each end of the chain names the identifier, so the check below is the
+# chain and not the prose around it. A phase that drops its half leaves the
+# requirement unreachable from the release, which is the exact defect F13 found.
+if ! grep -qx '## Traceability' standards/information-items.md; then
+  fail "standards/information-items.md must declare the '## Traceability' section"
+fi
+# The three statements that make the chain usable. The delivery endpoint is
+# the one that was missing entirely, so it is checked by name in phase 11
+# rather than by counting occurrences.
+for anchor in \
+  'blueprint/11-continuous-delivery.md:Release record.*requirements and changes it delivers' \
+  'blueprint/01-requirements.md:AC-nn' \
+  'blueprint/05-implementation.md:FR-nn' \
+  'blueprint/06-testing.md:criterion coverage' \
+  'blueprint/14-continuous-improvement.md:FR-nn' ; do
+  doc=${anchor%%:*}; pattern=${anchor#*:}
+  if ! grep -qiE "$pattern" "$doc"; then
+    fail "traceability anchor missing: ${doc} does not name '${pattern}'"
+  fi
+done
+# Phase 04 already required the design to name its requirement. The chain
+# only holds if that link is still there, so its absence is a regression.
+if ! grep -q 'requirement it satisfies' blueprint/04-design.md; then
+  fail "blueprint/04-design.md lost the requirement link; the chain starts at design"
+fi
+
+echo "== The requirements register is living and checkable =="
+REG=blueprint/requirements/software-engineering-blueprint.md
+# The defect this phase fixes is that the register described v1.0.0 while
+# VERSION said 1.1.0-dev. Banning the string "v1.0.0" would be wrong: the
+# delivery table has to name the release that shipped FR-01..FR-08. So the
+# check is the cross-reference instead, and it fails the moment someone bumps
+# VERSION and forgets the register, which is the staleness itself.
+if [ ! -f "$REG" ]; then
+  fail "missing the requirements register: $REG"
+else
+  if ! grep -qF "$(tr -d '[:space:]' < VERSION)" "$REG"; then
+    fail "$REG does not name the current VERSION; a living register tracks what the repository is held to"
+  fi
+  # Every requirement has to carry its verification and the artifact that
+  # realises it, per standards/information-items.md. A row missing either is
+  # the failure mode the Definition of Done already describes: prose that
+  # sounds checkable and names no check.
+  awk -v doc="$REG" '
+    /^\| (FR|NFR|AC)-[0-9]+ \|/ {
+      row = $0
+      n = split(row, cell, "|")
+      # Leading and trailing pipes give two empty fields; a 4-column row
+      # therefore splits into 6.
+      if (n != 6) { print "FAIL: " doc ": " cell[2] " has " (n - 2) " columns, expected 4"; bad = 1; next }
+      for (i = 2; i <= 5; i++) {
+        gsub(/^[ \t]+|[ \t]+$/, "", cell[i])
+        if (cell[i] == "") { print "FAIL: " doc ": " cell[2] " has an empty column " (i - 1); bad = 1 }
+      }
+    }
+    END { exit bad ? 1 : 0 }
+  ' "$REG" || failed=1
+  # An identifier reused for a different requirement breaks every link that
+  # names it, so a duplicate is a defect and not a formatting issue.
+  dups=$(grep -oE '^\| (FR|NFR|AC)-[0-9]+' "$REG" | sort | uniq -d)
+  if [ -n "$dups" ]; then
+    fail "$REG reuses a requirement identifier: $(echo "$dups" | tr '\n' ' ')"
+  fi
+  # The register is living, so it has to say how it is maintained. Without
+  # the rule the document decays into exactly the frozen snapshot it replaced.
+  # Headings are anchored: a substring match would accept a mention of the
+  # word inside a sentence and call the section present.
+  for heading in '^## Maintenance' '^## Traceability' '^## Delivery' '^### Not provided'; do
+    if ! grep -qE "$heading" "$REG"; then
+      fail "$REG is missing the section ${heading#^}"
+    fi
+  done
+fi
+
+echo "== The templates carry the fields the standards already require =="
+# The templates were thinner than the standards governing them: requirement.md
+# omitted the verification method the Definition of Done demands, and change.md
+# omitted the pattern justification ADR-006 requires. Each field below is
+# checked by the heading that introduces it, not by a word that could appear
+# in the surrounding prose.
+grep -qx '## Traceability' templates/requirement.md \
+  || fail "templates/requirement.md must declare a '## Traceability' section"
+grep -qE '^\| ID \| Requirement \| Verification \|' templates/requirement.md \
+  || fail "templates/requirement.md must require a Verification column per requirement"
+grep -q 'AC-nn' templates/requirement.md \
+  || fail "templates/requirement.md must number acceptance criteria as AC-nn"
+grep -q 'quality attribute' templates/requirement.md \
+  || fail "templates/requirement.md must require the quality attribute on an NFR"
+grep -qx '### Patterns' templates/change.md \
+  || fail "templates/change.md must declare a '### Patterns' section"
+grep -qx '### ADR' templates/change.md \
+  || fail "templates/change.md must declare a '### ADR' section"
+grep -qx '## Deletions' templates/change.md \
+  || fail "templates/change.md must declare a '## Deletions' section"
+grep -qE '^\| Criterion \| Level \| Check that verifies it \|' templates/change.md \
+  || fail "templates/change.md must require the check that verifies each criterion"
+# change.md records the identifier, but a change that satisfies no requirement
+# has to be able to say so, or the field becomes an invention obligation.
+grep -q 'satisfies none' templates/change.md \
+  || fail "templates/change.md must allow a change that satisfies no requirement to say so"
+
+echo "== CI runs are bounded and superseded runs are cancelled (see FR-21) =="
+# A job with no timeout holds its concurrency slot for the six hours GitHub
+# allows. And without a concurrency group, a push to a branch with an open pull
+# request queues a second full run, so a reviewer reads the verdict of a commit
+# that is no longer the head.
+for wf in .github/workflows/ci.yml .github/workflows/reusable-blueprint-validation.yml; do
+  if ! grep -q '^concurrency:' "$wf"; then
+    fail "$wf declares no concurrency group; superseded runs queue instead of cancelling"
+  fi
+  # Count jobs by parsing the jobs: block, not by counting two-space keys. A
+  # trigger such as `  push:` is indented exactly like a job, so the first
+  # version of this check reported four jobs for a three-job workflow and
+  # compared a timeout count against a number that was never a job count.
+  jobs=$(awk '
+    /^jobs:/                 { injobs = 1; next }
+    /^[A-Za-z]/              { injobs = 0 }
+    injobs && /^  [A-Za-z0-9_-]+:[[:space:]]*$/ { c++ }
+    END                      { print c + 0 }
+  ' "$wf")
+  bounds=$(awk '
+    /^jobs:/                 { injobs = 1; next }
+    /^[A-Za-z]/              { injobs = 0 }
+    injobs && /^    timeout-minutes: [0-9]+[[:space:]]*$/ { c++ }
+    END                      { print c + 0 }
+  ' "$wf")
+  if [ "$jobs" -eq 0 ]; then
+    fail "$wf declares no jobs, so the job parse found nothing to bound"
+  fi
+  if [ "$bounds" -lt "$jobs" ]; then
+    fail "$wf declares $bounds timeout-minutes for $jobs jobs; every job needs a bound"
+  fi
+done
+
+echo "== The documented example pins something that works (see FR-22) =="
+# The header comment contradicted itself: it told the consumer to pin a tag and
+# never a branch, then told them to pin the branch, and its example used the
+# one tag that does not carry the checks the file describes. All three mutations
+# below are regressions of that contradiction.
+RW=.github/workflows/reusable-blueprint-validation.yml
+if grep -q 'Pin a tag, never a branch' "$RW"; then
+  fail "$RW still claims a tag is the only valid pin, which the comment below it contradicts"
+fi
+if grep -qE 'uses: .*reusable-blueprint-validation\.yml@v1\.0\.0' "$RW"; then
+  fail "$RW documents an example that pins v1.0.0, which does not carry the floor it describes"
+fi
+# The honest statement has to name the tradeoff, or the example looks arbitrary.
+for claim in 'Pin the branch' 're-pin to a tag'; do
+  if ! grep -q "$claim" "$RW"; then
+    fail "$RW must state '$claim' so the example is not arbitrary"
+  fi
+done
+
+echo "== Third-party pins are declared, not assumed (see 'Not provided') =="
+# dependabot cannot cover the npm pin: it reads a package.json and this
+# repository has none on purpose. What is checked is that the gap is declared,
+# because an npm entry that silently opens no pull requests is a check that
+# looks present and is not.
+if [ ! -f .github/dependabot.yml ]; then
+  fail "missing .github/dependabot.yml; a pinned action goes stale with nothing proposing the bump"
+fi
+if ! grep -q 'package-ecosystem: github-actions' .github/dependabot.yml; then
+  fail ".github/dependabot.yml does not cover the actions the gate uses"
+fi
+if ! grep -q 'package-ecosystem: npm' .github/dependabot.yml; then
+  # Correct, and the reason has to be written down where a reader looks.
+  if ! grep -q 'package.json' blueprint/requirements/software-engineering-blueprint.md; then
+    fail "dependabot omits npm, so the reason it is omitted must be declared in the register"
+  fi
+fi
+# The checkout action is the one input that is not pinned exactly. The gate
+# refuses to say "pinned" about it, because that is a claim the file cannot
+# support.
+if ! grep -q 'actions/checkout@v5' .github/workflows/ci.yml; then
+  fail "ci.yml no longer pins actions/checkout to the major tag its comment describes"
+fi
+if ! grep -q 'major tag, not to a commit SHA' .github/workflows/ci.yml; then
+  fail "ci.yml must declare that the checkout pin is a major tag and not an exact SHA"
+fi
+# The register claimed a POSIX shell. It uses seq -w, compgen and process
+# substitution, so that was false, and a false dependency is worse than a
+# demanding one.
+if grep -qi 'A POSIX shell for the repository' blueprint/requirements/software-engineering-blueprint.md; then
+  fail "the register still claims the gate needs a POSIX shell; it needs bash"
+fi
+if ! grep -q 'Bash, not a POSIX shell' blueprint/requirements/software-engineering-blueprint.md; then
+  fail "the register must state the real shell dependency of the gate"
 fi
 
 echo "== Quality attribute scenarios are wired into the phases that consume them =="
@@ -355,6 +745,69 @@ if grep -rnE '\bPrefer\b' blueprint/0*.md blueprint/1*.md standards/ templates/ 
   fail "normative text uses 'Prefer' as if it were modality (see ADR-008)"
 fi
 
+echo "== A decision is significant, not merely important (see standards/terms.md) =="
+# terms.md removed 'important' as a threshold and defined 'significant
+# decision' by criteria. The two documents that still used the old word are
+# the defect this check exists to keep gone. It is the phrase that is banned,
+# not the word: prose may explain that something is NOT important without
+# reintroducing a threshold, which is exactly what the corrected text does.
+if grep -rniE 'important[[:space:]]+(architectural[[:space:]]+)?(decision|assumption)' \
+    blueprint/0*.md blueprint/1*.md templates/ 2>/dev/null; then
+  fail "normative text uses 'important' as the threshold; use the criteria in standards/terms.md"
+fi
+
+echo "== The git standard is checkable and the single source of the commit types (see FR-25) =="
+check_file standards/git.md
+if ! grep -qx '## Quality gate' standards/git.md; then
+  fail "standards/git.md declares no quality gate"
+fi
+for t in feat fix docs chore refactor test ci build release; do
+  if ! grep -qE "\`${t}\`" standards/git.md; then
+    fail "standards/git.md does not declare \`${t}\` as an accepted commit type"
+  fi
+done
+# The traceability rule is an obligation since ADR-013. A standard that still
+# offers it as a convenience contradicts the requirement it sits under.
+if grep -q 'when practical' standards/git.md; then
+  fail "standards/git.md still states traceability as optional, which FR-19 and ADR-013 made an obligation"
+fi
+if ! grep -q 'standards/git.md' CONTRIBUTING.md; then
+  fail "CONTRIBUTING.md does not point at standards/git.md as the source of the commit rules"
+fi
+
+echo "== The language of each class of document is declared (see FR-23) =="
+# The repository is bilingual and used to say so nowhere. A contributor had
+# to infer the rule from the files they happened to open.
+if ! grep -qx '### Language' CONTRIBUTING.md; then
+  fail "CONTRIBUTING.md declares no language policy"
+fi
+if ! grep -q 'installed into other projects' CONTRIBUTING.md; then
+  fail "CONTRIBUTING.md states a language policy without saying why English is the normative language"
+fi
+
+echo "== A document reference in prose resolves (see FR-24) =="
+# The internal-link check below only sees [text](path). A path in backticks is
+# invisible to it, and three ADR references had drifted to names that never
+# existed. A backticked reference to an ADR, a phase document or a standard is
+# a living pointer, never a legitimate absence, so all three are resolved.
+# Document filenames are stable; if that ever changes, this is where a rename
+# would be caught rather than left to a dead reference.
+# CHANGELOG.md is excluded: a record of those defects has to be able to name
+# the paths that were wrong, which is the same reason the modality check
+# excludes the standards that quote the words they ban.
+missing=$(grep -rhoE '`(blueprint/(architecture/adr/)?adr-[0-9]{3}-[A-Za-z0-9-]+\.md|blueprint/[0-9]{2}-[A-Za-z0-9-]+\.md|standards/[A-Za-z0-9-]+\.md)`' \
+  blueprint/ standards/ templates/ README.md CONTRIBUTING.md AGENTS.md 2>/dev/null \
+  | tr -d '`' | sort -u | while IFS= read -r ref; do
+    case "$ref" in
+      blueprint/*|standards/*) p="$ref" ;;
+      *) p="blueprint/architecture/adr/$ref" ;;
+    esac
+    [ -e "$p" ] || echo "$ref"
+  done)
+if [ -n "$missing" ]; then
+  fail "a backticked document reference does not resolve: $(echo "$missing" | tr '\n' ' ')"
+fi
+
 echo "== OpenCode adapter =="
 for s in blueprint blueprint-architecture blueprint-cicd blueprint-development blueprint-requirements; do
   check_file ".opencode/skills/${s}/SKILL.md"
@@ -377,6 +830,20 @@ for s in blueprint blueprint-architecture blueprint-cicd blueprint-development b
   fi
   if grep -qE '^#+ .*(Justification test|Absence is not a finding|SOLID as a diagnostic)' ".opencode/skills/${s}/SKILL.md"; then
     fail "skill ${s} restates standards/code-design.md instead of routing to it"
+  fi
+done
+
+echo "== The adapter routes to every standard =="
+# standards/ is normative and .opencode/ is an adapter, not a source of truth. An
+# adapter that does not name a standard cannot route a reader to it, and three of
+# the six were unreachable from .opencode/ in any file. AGENTS.md is the core
+# router; this asserts the adapter has not fallen behind it.
+for s in standards/*.md; do
+  if ! grep -rq "$s" AGENTS.md; then
+    fail "AGENTS.md does not route to $s, so the standard is unreachable"
+  fi
+  if ! grep -rq "$s" .opencode/; then
+    fail ".opencode/ never references $s, so the adapter cannot route to it"
   fi
 done
 

@@ -56,5 +56,31 @@ La configuración de `markdownlint-cli` desactiva `MD013` (longitud de línea), 
 - `.github/CODEOWNERS` requiere que el equipo `@JorvaCode/blueprint-maintainers` exista en la organización. Una entrada que no resuelve a ningún usuario o equipo se ignora en silencio, y por eso también queda marcada como pendiente.
 - La plantilla de pull request es más larga. Es intencionado: obliga a declarar la fase y a enumerar las comprobaciones antes de que un revisor las pida.
 
+Resuelto el 2026-09-29. Los tres puntos pendientes de este ADR se cerraron sin inventar un
+mantenimiento que nadie se comprometa a asumir:
+
+- Los dos ficheros de reporte ya no piden un buzón. Ambos enrutan por canales privados de
+  GitHub —el botón *Report a vulnerability* y *Report abuse* de la organización—, que no
+  requieren que una dirección esté vigilada. La ausencia del botón en `SECURITY.md` se
+  declara como un hueco de configuración del mantenedor, no como una invitación a publicar
+  el reporte.
+- `.github/CODEOWNERS` se eliminó. Con un solo mantenedor no hay una segunda cuenta que
+  nombrar, y un fichero de propietarios que no resuelve a nadie se parece a un control de
+  revisión y no protege de nada. Regresa como un fichero de una línea cuando exista otra
+  persona que nombrar.
+
+Resuelto el 2026-09-29, segunda parte. El párrafo de `## Decision` que descarta la opción 5
+—"no hay código de aplicación en este repositorio"— ha quedado superado por
+[ADR-012](adr-012-licencia-del-codigo-y-distribucion-de-licencias.md). La premisa era
+correcta cuando se escribió y hoy es falsa: el repositorio tiene cinco scripts ejecutables y
+dos definiciones de workflow, y CC BY 4.0 los distribuye como si fueran contenido. La
+documentación sigue bajo CC BY 4.0 y el código pasa a Apache-2.0.
+
+El `## Status` de este ADR no cambia a `Superseded`, y esa es la decisión. Un ADR aceptado
+cuyo texto se reescribe deja de ser un registro: pasa a ser una afirmación sobre lo que el
+mantenedor cree hoy. La mitad de gobernanza de este ADR sigue vigente y no se toca; la mitad
+de licencia queda ampliada y no corregida, y ADR-012 dice cuál es la parte que manda. Un
+lector que encuentre las dos referencias sabe cuál es cuál.
+
 ## Date
 2026-09-29

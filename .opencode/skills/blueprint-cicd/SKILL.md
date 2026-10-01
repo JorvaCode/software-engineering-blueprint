@@ -19,6 +19,14 @@ All paths below are relative to the project root.
 - `blueprint/14-continuous-improvement.md`
 - `.github/workflows/` — example pipeline and reusable validation workflow
 
+## Standards
+
+- `standards/definition-of-done.md` — the criteria a change is closed against.
+- `standards/normative-language.md` — a pipeline check is a gate, and a gate needs an
+  artifact, a criterion and evidence.
+- `standards/information-items.md` — what the pipeline, packaging and deployment
+  artifacts shall contain.
+
 ## Procedure
 
 1. CI validates the change automatically: build, tests, quality, security, package. A

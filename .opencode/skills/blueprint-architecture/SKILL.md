@@ -18,6 +18,14 @@ All paths below are relative to the project root.
 - `templates/change.md`
 - `blueprint/architecture/adr/` — decisions recorded so far; read before proposing a new one
 
+## Standards
+
+- `standards/code-design.md` — design quality, SOLID, Clean Code and pattern selection.
+- `standards/terms.md` — the 42010 vocabulary: stakeholder, concern, viewpoint, view, and
+  the significance criteria that decide whether a decision needs an ADR.
+- `standards/normative-language.md` — modality, and the three parts a gate needs to fail.
+- `standards/information-items.md` — what the design artifact shall contain.
+
 ## Procedure
 
 1. Read the existing ADRs and the current code before proposing a design. The default

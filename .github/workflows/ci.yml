@@ -1,5 +1,17 @@
 name: Blueprint CI
 
+# actions/checkout is pinned to a major tag, not to a commit SHA. That is a
+# deliberate residual risk and not an oversight: an exact SHA is the stronger
+# posture against a moved gate, but a SHA this repository cannot verify is a
+# gate that breaks for every contributor at once, and a wrong one is not
+# detectable from a checkout with no network. `.github/dependabot.yml` proposes
+# the bump so the review happens on a schedule rather than by accident.
+#
+# The comment on the markdown step below claims an exact pin, and that claim is
+# true of markdownlint and only of markdownlint. The distinction is the point:
+# one of the two third-party inputs here is exact and the other is not, and
+# saying "pinned" about both would be a claim the file does not support.
+
 on:
   push:
     branches: [ main ]
@@ -8,10 +20,22 @@ on:
 permissions:
   contents: read
 
+# A push to a branch that already has an open pull request starts a second run
+# of the same checks. Without this, all of them queue, the queue drains in
+# order, and a reviewer reads the verdict of a commit that is no longer the
+# head. Superseded runs are cancelled instead of reported.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   markdown-lint:
     name: Lint markdown
     runs-on: ubuntu-latest
+    # A lint step over this repository finishes in seconds. Ten minutes is the
+    # point at which a hang is more plausible than a slow run, and without a
+    # bound a wedged job holds a concurrency slot indefinitely.
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -24,6 +48,7 @@ jobs:
   blueprint-validation:
     name: Validate blueprint structure and content
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -38,6 +63,7 @@ jobs:
   installer-tests:
     name: Test the installers
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v5

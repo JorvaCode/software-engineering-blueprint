@@ -13,6 +13,12 @@
   someone else's package.json is a consumer with a bug they did not write.
   See ADR-011.
 
+  Separately, and outside the allowlist, it distributes the two licences:
+  LICENSE (documentation, CC BY 4.0) and LICENSE-CODE (code, Apache-2.0). The
+  documentation licence conditions reuse on attribution, so a consumer that
+  receives the content has to receive the terms with it. A destination that
+  already has a LICENSE is left untouched. See ADR-012.
+
   Does not overwrite existing content without warning.
 
 .EXAMPLE
@@ -131,6 +137,44 @@ foreach ($entry in $allowlist) {
     }
 }
 
+# Licence distribution. Deliberately NOT the allowlist. The allowlist names the
+# content directories that make up the blueprint, and a licence is not content of
+# the process; this is a separate distribution decision, recorded in ADR-012,
+# with its own evidence in the manifest below.
+#
+# The documentation is CC BY 4.0 and the code is Apache-2.0. CC BY 4.0
+# conditions reuse on attribution, so a consumer handed the content without the
+# terms has a permission whose condition it cannot satisfy.
+#
+# A destination that already has a LICENSE is left alone. The licence in a
+# project's root is that project's, and overwriting it is a defect rather than a
+# courtesy. See ADR-012.
+$docLicence   = 'CC-BY-4.0'
+$codeLicence  = 'Apache-2.0'
+$licenceFiles = @()
+
+if (Test-Path -LiteralPath (Join-Path $dest 'LICENSE')) {
+    Write-Info "NOTICE    destination already has a LICENSE; leaving it untouched and not adding ours"
+} else {
+    foreach ($l in @('LICENSE', 'LICENSE-CODE')) {
+        $srcL = Join-Path $blueprintRoot $l
+        if (-not (Test-Path -LiteralPath $srcL -PathType Leaf)) {
+            Write-Err "required licence file missing: $srcL"
+            $failed = $true
+            break
+        }
+        try {
+            Copy-Item -LiteralPath $srcL -Destination (Join-Path $dest $l)
+            $licenceFiles += $l
+            Write-Info "installed  $l"
+        } catch {
+            Write-Err "failed to copy '$l': $($_.Exception.Message)"
+            $failed = $true
+            break
+        }
+    }
+}
+
 # Record what was installed, so a consumer can tell which blueprint it has and
 # whether it has been modified since. The version is the identifier; there is no
 # content hash because computing one would need a tool this installer does not
@@ -146,13 +190,27 @@ $manifestPath = Join-Path $dest '.blueprint-install.json'
 if (Test-Path -LiteralPath $manifestPath) {
     Write-Warn "'.blueprint-install.json' already exists. Leaving it untouched."
 } else {
-    $entries = ($allowlist | ForEach-Object { '        "{0}"' -f $_ }) -join ",`n"
+    # The entries recorded are the ones this run actually applied, not the
+    # allowlist. An entry skipped as already-present was not applied, and a
+    # manifest that claims otherwise misreports the destination. See ADR-011.
+    $entries = ($installed | ForEach-Object { '        "{0}"' -f $_ }) -join ",`n"
+    # The licence files are recorded as delivered, not as intended. A destination
+    # that brought its own LICENSE received none of ours, and a manifest listing
+    # them anyway is the same false report commit 679dbb4 removed from entries.
+    $licenceEntries = ($licenceFiles | ForEach-Object { '      "{0}"' -f $_ }) -join ",`n"
     $manifest = @"
 {
   "blueprint": "software-engineering-blueprint",
   "version": "$blueprintVersion",
   "installedAt": "$([DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ'))",
   "installer": "scripts/blueprint-init.ps1",
+  "licenses": {
+    "documentation": "$docLicence",
+    "code": "$codeLicence",
+    "files": [
+$licenceEntries
+    ]
+  },
   "entries": [
 $entries
   ]
@@ -180,6 +238,10 @@ Write-Info "Skipped (already present): $($skipped.Count)"
 foreach ($d in $skipped) {
     Write-Info "  - $d"
 }
+# Unconditional, because the terms matter most in the case where they were not
+# copied: a destination that kept its own LICENSE still needs to know what the
+# content it just received is under.
+Write-Info "Licence: documentation $docLicence, code $codeLicence (see ADR-012)"
 
 if ($failed) {
     Write-Err "Installation FAILED."

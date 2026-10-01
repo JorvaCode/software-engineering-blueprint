@@ -4,7 +4,10 @@
 Every change starts with an explicit problem, objective and acceptance criteria.
 
 ## 2. Architecture is intentional
-Important architectural decisions are documented and traceable.
+Architectural decisions that are significant by the criteria in `standards/terms.md` are
+documented and traceable. A decision that is merely felt to be important is not a decision
+that gets an ADR, and a decision that is significant is recorded whether or not it felt
+important at the time.
 
 ## 3. Small, verifiable changes
 Changes should be small enough to be built, tested and reviewed independently.
@@ -19,7 +22,9 @@ Repeatable activities should be automated whenever practical.
 Security requirements and checks are part of the normal delivery flow.
 
 ## 7. Traceability
-A requirement should be traceable through design, implementation, tests and delivery.
+A requirement is traceable through design, implementation, tests and delivery, per
+`standards/information-items.md`. The chain is named on items that already exist, so it
+costs a field rather than a document nobody maintains.
 
 ## 8. Feedback loop
 Production and development feedback feed continuous improvement.
