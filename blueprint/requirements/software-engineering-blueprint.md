@@ -61,7 +61,7 @@ Stated here rather than left for a consumer to discover:
 - **Tooling that enforces traceability.** The chain between requirement, test and release is
   declared and review-enforced. `standards/information-items.md` and `ADR-013` state why no
   automatic completeness check exists.
-- **A commit SHA for `actions/checkout`.** The action is pinned to the `v5` major tag, so a new
+- **A commit SHA for `actions/checkout`.** The action is pinned to the `v7` major tag, so a new
   minor release can change what the gate does without a change in this repository. An exact SHA
   is the stronger posture, and it is not used here because this repository cannot verify one
   without network access, and a wrong SHA breaks CI for every contributor at once with no local
@@ -160,6 +160,10 @@ Every requirement in this register is delivered by a release. A requirement adde
 table was last updated is in development until the release that carries it names it here; it is
 not left to lapse.
 
+The working tree declares `1.2.0-dev`, which is not a release and is deliberately absent from
+the table above. It is the version this tree will produce as `1.2.0` once the changelog section
+for it is published, and that substitution happens as part of the release, not before it.
+
 ## Dependencies
 - Git and GitHub (or an equivalent platform) for branching, pull requests and CI execution; the
   workflows are examples, not hard requirements.
@@ -171,7 +175,7 @@ not left to lapse.
 - OpenCode, only when the optional skills adapter is used (a runtime dependency of the skills,
   not of the blueprint itself).
 - No build toolchain, package manager or runtime is required to use the blueprint process.
-- `actions/checkout`, pinned to the `v5` major tag, is the gate's only third-party runtime input
+- `actions/checkout`, pinned to the `v7` major tag, is the gate's only third-party runtime input
   and the one input that is not pinned exactly. See `## Not provided`.
 
 ## Risks / assumptions

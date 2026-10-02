@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ## [Unreleased]
 
+### Changed
+
+- **`actions/checkout` moves from `v5` to `v7`** in both `ci.yml` and `reusable-blueprint-validation.yml`, on the branch Dependabot opened for it. `v7` runs on the node24 runtime and so requires Actions Runner `v2.327.1` or newer; GitHub-hosted runners satisfy that by themselves, but a consumer copying the documented reusable-workflow example onto an older self-hosted runner is affected, which is why this is a minor version rather than a patch. The breaking change `v7` introduces — refusing to check out fork code under `pull_request_target` and `workflow_run` — does not apply here, because this repository triggers on `pull_request`. The backport of that same default reached `v5` on `2026-07-20` and floating major tags collect it automatically, so `v5` already carried it: this is two majors of dependency updates, not a security fix.
+
+### Fixed
+
+- **The third-party pin gate compared against a hardcoded version.** `validate-blueprint.sh` asserted that `ci.yml` contained `actions/checkout@v5`. Every deliberate bump therefore failed the gate, and the only way through was to edit the validator as well, which put a single decision in two files. The failure message compounded it: it said the pin no longer matched "the major tag its comment describes", and that comment never named a major — it says the pin is "a major tag, not to a commit SHA". The message pointed the reader at a file that was not broken. The check now tests the property the declaration claims: a single pin, a major tag and not an exact SHA, the same major in both workflows, and the declaration still present. Falsified in all three directions — bumping one workflow only, replacing the pin with a SHA, and removing the declaration each fail it with their own message.
+- **The pin check only read `ci.yml`.** The reusable workflow pins the same action and runs the same gate, and nothing compared the two, so a partial bump passed while leaving the two files on different majors.
+
 ## [1.1.0] - 2026-10-01
 
 ### Added

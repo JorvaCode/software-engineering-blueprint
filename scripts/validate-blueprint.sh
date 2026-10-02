@@ -682,11 +682,39 @@ fi
 # The checkout action is the one input that is not pinned exactly. The gate
 # refuses to say "pinned" about it, because that is a claim the file cannot
 # support.
-if ! grep -q 'actions/checkout@v5' .github/workflows/ci.yml; then
-  fail "ci.yml no longer pins actions/checkout to the major tag its comment describes"
+#
+# What is checked is the property the declaration claims, not a version. A
+# literal version here duplicated a decision that lives in the workflows, and
+# every deliberate bump then failed with a message naming a comment that never
+# named a version: ci.yml says "pinned to a major tag, not to a commit SHA"
+# and never states which major. The comment is the declaration and the pin is
+# the evidence; the gate compares the two workflows against each other and
+# checks that the pin is a major, not that it is the major someone hardcoded
+# here. Falsification: bump one workflow only, or replace the pin with a SHA.
+checkout_pin() {
+  sed -n 's|.*uses: actions/checkout@\([^[:space:]]*\).*|\1|p' "$1" | sort -u
+}
+ci_pin=$(checkout_pin .github/workflows/ci.yml)
+reusable_pin=$(checkout_pin .github/workflows/reusable-blueprint-validation.yml)
+if [ "$(printf '%s\n' "$ci_pin" | wc -l)" -ne 1 ]; then
+  fail "ci.yml mixes several checkout pins: $(printf '%s' "$ci_pin" | tr '\n' ' ')"
+fi
+if ! printf '%s' "$ci_pin" | grep -Eq '^v[0-9]+$'; then
+  fail "ci.yml pins actions/checkout to $ci_pin, but its declared posture is a major tag and not an exact SHA"
+fi
+if [ "$reusable_pin" != "$ci_pin" ]; then
+  fail "reusable-blueprint-validation.yml pins actions/checkout to $reusable_pin while ci.yml pins $ci_pin; both run this gate and must not drift"
 fi
 if ! grep -q 'major tag, not to a commit SHA' .github/workflows/ci.yml; then
   fail "ci.yml must declare that the checkout pin is a major tag and not an exact SHA"
+fi
+# The register names the same major in prose, under 'Not provided' and again in
+# the dependency list. Bumping the pin without editing those sentences leaves a
+# declaration that is wrong in the place a consumer reads it, and the check
+# above cannot see prose, so the two are compared here instead of trusted.
+pin_claim="pinned to the \`$ci_pin\` major tag"
+if ! grep -qF "$pin_claim" "$REG"; then
+  fail "$REG does not describe actions/checkout as $pin_claim; the declared posture and the pin disagree"
 fi
 # The register claimed a POSIX shell. It uses seq -w, compgen and process
 # substitution, so that was false, and a false dependency is worse than a
